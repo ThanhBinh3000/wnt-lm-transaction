@@ -11,4 +11,5 @@ public class GiaoDichHangHoaReq extends BaseRequest {
     private Integer LoaiGiaoDich;
     private String maCoSo;
     private Integer loaiBaoCao;
+    private Integer pageSize;
 }

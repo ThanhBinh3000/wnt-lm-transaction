@@ -33,4 +33,19 @@ public class GiaoDichHangHoaRes extends BaseRequest {
     private BigDecimal doanhThuCoSo;
     private BigDecimal tslnCoSo;
     private BigDecimal soLuongCoSo;
+    private BigDecimal doanhSoNhapThiTruong;
+    public GiaoDichHangHoaRes(String tenThuoc, String tenNhomThuoc, String tenDonVi, String tenNhomDuocLy, String tenHoatChat,
+                           BigDecimal giaBan, BigDecimal giaNhap, BigDecimal soLuong,
+                           BigDecimal doanhThuCoSo, BigDecimal soLuongCoSo) {
+        this.tenThuoc = tenThuoc;
+        this.tenNhomThuoc = tenNhomThuoc;
+        this.tenDonVi = tenDonVi;
+        this.tenNhomDuocLy = tenNhomDuocLy;
+        this.tenHoatChat = tenHoatChat;
+        this.doanhThuThiTruong = giaBan;
+        this.doanhSoNhapThiTruong = giaNhap;
+        this.soLuongThiTruong = soLuong;
+        this.doanhThuCoSo = doanhThuCoSo;
+        this.soLuongCoSo = soLuongCoSo;
+    }
 }
