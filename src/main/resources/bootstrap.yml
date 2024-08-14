@@ -1,0 +1,12 @@
+# Spring
+spring:
+  application:
+    name: wnt-lm-transaction
+  profiles:
+    active: dev
+  cloud:
+    config:
+      uri: http://10.0.1.141:30004
+      label: latest
+      username: ENCL(4TgsCgB/cYlX8NluvYrtEQ==)
+      password: ENCL(qOFOubyoW0Mm8bk9BtETjw==)

@@ -1,4 +1,4 @@
-# wnt-lm-transaction
+# wnt-lm-system
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin http://10.0.13.45/lienminhnhathuoc/wnt-lm-transaction.git
+git remote add origin http://10.0.13.45/lienminhnhathuoc/wnt-lm-system.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](http://10.0.13.45/lienminhnhathuoc/wnt-lm-transaction/-/settings/integrations)
+- [ ] [Set up project integrations](http://10.0.13.45/lienminhnhathuoc/wnt-lm-system/-/settings/integrations)
 
 ## Collaborate with your team
 
