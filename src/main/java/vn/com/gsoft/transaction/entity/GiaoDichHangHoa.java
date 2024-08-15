@@ -7,6 +7,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @NoArgsConstructor
@@ -50,13 +51,4 @@ public class GiaoDichHangHoa extends BaseEntity {
     private String maCoSo;
     @Column(name = "SoLuongQuyDoi")
     private BigDecimal soLuongQuyDoi;
-    @Transient
-    private BigDecimal doanhThu;
-
-    public GiaoDichHangHoa(String tenThuoc, String tenNhomThuoc, String tenDonVi, BigDecimal doanhThu) {
-        this.tenThuoc = tenThuoc;
-        this.tenNhomThuoc = tenNhomThuoc;
-        this.tenDonVi = tenDonVi;
-        this.doanhThu = doanhThu;
-    }
 }

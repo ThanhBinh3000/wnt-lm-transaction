@@ -23,4 +23,16 @@ public class TransactionController {
     public ResponseEntity<BaseResponse> topDoanhThu(@RequestBody GiaoDichHangHoaReq objReq) throws Exception {
         return ResponseEntity.ok(ResponseUtils.ok(service.topDoanhThuBanChay(objReq)));
     }
+
+    @PostMapping(value = "top-so-luong", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<BaseResponse> topSoLuong(@RequestBody GiaoDichHangHoaReq objReq) throws Exception {
+        return ResponseEntity.ok(ResponseUtils.ok(service.topSoLuongBanChay(objReq)));
+    }
+
+    @PostMapping(value = "top-tsln", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<BaseResponse> topTSLN(@RequestBody GiaoDichHangHoaReq objReq) throws Exception {
+        return ResponseEntity.ok(ResponseUtils.ok(service.topTSLNCaoNhat(objReq)));
+    }
 }

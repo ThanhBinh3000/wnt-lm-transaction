@@ -32,16 +32,16 @@ public class Profile implements UserDetails, Serializable {
     private NhaThuocs nhaThuoc;
 
     private List<Role> roles;
+    private  String maCoSo;
 
-    private List<NhaThuocs> nhaThuocs;
 
-
-    public Profile(Long id, String fullName, NhaThuocs nhaThuoc, List<Role> roles, List<NhaThuocs> nhaThuocs, String username, String password, boolean enabled, boolean accountNonExpired, boolean credentialsNonExpired, boolean accountNonLocked, Set<CodeGrantedAuthority> authorities) {
+    public Profile(Long id, String fullName, NhaThuocs nhaThuoc, List<Role> roles,
+                   String username, String password, boolean enabled, boolean accountNonExpired,
+                   boolean credentialsNonExpired, boolean accountNonLocked, Set<CodeGrantedAuthority> authorities,
+                   String maCoSo) {
         this.id = id;
         this.fullName = fullName;
-        this.nhaThuoc = nhaThuoc;
         this.roles = roles;
-        this.nhaThuocs = nhaThuocs;
         this.username = username;
         this.password = password;
         this.enabled = enabled;
@@ -49,5 +49,6 @@ public class Profile implements UserDetails, Serializable {
         this.credentialsNonExpired = credentialsNonExpired;
         this.accountNonLocked = accountNonLocked;
         this.authorities = authorities;
+        this.maCoSo = maCoSo;
     }
 }
