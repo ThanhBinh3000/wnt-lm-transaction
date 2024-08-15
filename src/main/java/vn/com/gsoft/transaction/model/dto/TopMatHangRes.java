@@ -7,9 +7,8 @@ import vn.com.gsoft.transaction.model.system.BaseRequest;
 import java.math.BigDecimal;
 import java.util.Date;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class TopMatHangRes extends BaseRequest {
+public class TopMatHangRes {
     private String tenThuoc;
     private String tenNhomThuoc;
     private String tenDonVi;

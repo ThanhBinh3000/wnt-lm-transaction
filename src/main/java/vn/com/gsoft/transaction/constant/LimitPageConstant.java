@@ -1,5 +1,5 @@
 package vn.com.gsoft.transaction.constant;
 
 public class LimitPageConstant {
-    public final static Integer DEFAULT = 0;
+    public final static Integer DEFAULT = 50;
 }
