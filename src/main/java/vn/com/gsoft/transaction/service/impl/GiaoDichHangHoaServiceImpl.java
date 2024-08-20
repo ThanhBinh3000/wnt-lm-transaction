@@ -43,6 +43,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
+
+        setDefaultDates(req);
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
         req.setLoaiBaoCao(req.getLoaiBaoCao() == null ? BaoCaoContains.MAT_HANG : req.getLoaiBaoCao());
         var list = redisListService.getGiaoDichHangHoaValues(req);
@@ -133,6 +135,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         if (userInfo == null)
             throw new Exception("Bad request.");
 
+        setDefaultDates(req);
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
         var list = redisListService.getGiaoDichHangHoaValues(req);
 
@@ -222,6 +225,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         if (userInfo == null)
             throw new Exception("Bad request.");
 
+        setDefaultDates(req);
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
         var list = redisListService.getGiaoDichHangHoaValues(req);
 
@@ -365,7 +369,24 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         return data;
     }
 
-
+    private void setDefaultDates(GiaoDichHangHoaReq req) {
+        // Tạo đối tượng Calendar để tính toán ngày mặc định
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.YEAR, -5); // Trừ 5 năm so với năm hiện tại
+        calendar.set(Calendar.MONTH, Calendar.JANUARY);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        // Cài đặt ngày mặc định cho req nếu req.getFromDate() hoặc req.getToDate() là null
+        if (req.getFromDate() == null) {
+            req.setFromDate(calendar.getTime());
+        }
+        if (req.getToDate() == null) {
+            req.setToDate(new Date());
+        }
+    }
 
     @Override
     public void pushData(){
