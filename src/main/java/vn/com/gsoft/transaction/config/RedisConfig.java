@@ -13,8 +13,6 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import vn.com.gsoft.transaction.constant.CachingConstant;
-import vn.com.gsoft.transaction.constant.DBRedisContains;
-import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
 
 import java.time.Duration;
 
@@ -41,7 +39,7 @@ public class RedisConfig {
         configuration.setUsername(username);
         configuration.setPassword(password);
         LettuceConnectionFactory factory = new LettuceConnectionFactory(configuration);
-        factory.setDatabase(DBRedisContains.GIAO_DICH);
+        factory.setDatabase(CachingConstant.DB_GIAO_DICH_HANG_HOA);
         return factory;
     }
 
