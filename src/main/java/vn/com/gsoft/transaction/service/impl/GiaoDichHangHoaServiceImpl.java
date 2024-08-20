@@ -324,9 +324,13 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         return data;
     }
 
-    private void pushData(){
-        //        Pageable pageable = PageRequest.of(req.getPaggingReq().getPage(), req.getPaggingReq().getLimit());
-        //        Page<GiaoDichHangHoa> giaoDichHangHoas = hdrRepo.searchPage(req, pageable);
-        //        redisListService.pushDataRedis(giaoDichHangHoas.stream().toList());
+    @Override
+    public void pushData(){
+        var rep = new GiaoDichHangHoaReq();
+        Calendar dateArchive = Calendar.getInstance();
+        dateArchive.add(Calendar.YEAR, -1);
+        rep.setFromDate(dateArchive.getTime());
+        var list = hdrRepo.searchList(rep);
+        redisListService.pushDataRedis(list);
     }
 }

@@ -11,4 +11,5 @@ public interface GiaoDichHangHoaService extends BaseService<GiaoDichHangHoa, Gia
     List<TopMatHangRes> topDoanhThuBanChay(GiaoDichHangHoaReq req) throws Exception;
     List<TopMatHangRes> topTSLNCaoNhat(GiaoDichHangHoaReq req) throws Exception;
     List<TopMatHangRes> topSoLuongBanChay(GiaoDichHangHoaReq req) throws Exception;
+    void pushData();
 }
