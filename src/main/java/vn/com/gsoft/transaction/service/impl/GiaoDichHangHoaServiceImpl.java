@@ -46,13 +46,15 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
         setDefaultDates(req);
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
-        req.setLoaiBaoCao(req.getLoaiBaoCao() == null ? BaoCaoContains.MAT_HANG : req.getLoaiBaoCao());
         var list = redisListService.getGiaoDichHangHoaValues(req);
 
         var items = list.stream()
                 .map(element->(GiaoDichHangHoa) element)
                 .collect(Collectors.toList());
-
+        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
+            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
+                    .collect(Collectors.toList());
+        }
         Calendar dateArchive = Calendar.getInstance();
         dateArchive.add(Calendar.YEAR, -1);
         //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
@@ -63,69 +65,38 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 items.addAll(listArchive);
             }
         }
+
         List<TopMatHangRes> data = new ArrayList<>();
 
-        if(req.getLoaiBaoCao().equals(BaoCaoContains.MAT_HANG)){
-            data = items.stream()
-                    .collect(Collectors.groupingBy(
-                            GiaoDichHangHoa::getThuocId,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    x -> {
-                                        if (x.isEmpty()) {
-                                            return null;
-                                        }
-                                        var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                        BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
-
-                                        if(!duLieuCoSo.isParallel()){
-                                            doanhSoCoSo = duLieuCoSo.map(item-> item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                        }
-                                        return new TopMatHangRes(
-                                                x.get(0).getTenThuoc(),
-                                                x.get(0).getTenNhomThuoc(),
-                                                x.get(0).getTenDonVi(),
-                                                x.stream().map(item->item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                                doanhSoCoSo
-                                        );
+        data = items.stream()
+                .collect(Collectors.groupingBy(
+                        GiaoDichHangHoa::getThuocId,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                x -> {
+                                    if (x.isEmpty()) {
+                                        return null;
                                     }
-                            )
-                    ))
-                    .values().stream()
-                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                    .limit(req.getPageSize())
-                    .collect(Collectors.toList());
-        }else if(req.getLoaiBaoCao().equals(BaoCaoContains.NHOM_HANG)){
-            data = items.stream()
-                    .collect(Collectors.groupingBy(
-                            GiaoDichHangHoa::getNhomThuocId,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    x -> {
-                                        if (x.isEmpty()) {
-                                            return null;
-                                        }
-                                        var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                        BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
+                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
+                                    BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
 
-                                        if(!duLieuCoSo.isParallel()){
-                                            doanhSoCoSo = duLieuCoSo.map(item-> item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                        }
-                                        return new TopMatHangRes(
-                                                x.get(0).getTenThuoc(),
-                                                x.get(0).getTenNhomThuoc(),
-                                                x.get(0).getTenDonVi(),
-                                                x.stream().map(item->item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                                doanhSoCoSo
-                                        );
+                                    if(!duLieuCoSo.isParallel()){
+                                        doanhSoCoSo = duLieuCoSo.map(item-> item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add);
                                     }
-                            )
-                    ))
-                    .values().stream()
-                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                    .limit(req.getPageSize())
-                    .collect(Collectors.toList());
-        }
+                                    return new TopMatHangRes(
+                                            x.get(0).getTenThuoc(),
+                                            x.get(0).getTenNhomThuoc(),
+                                            x.get(0).getTenDonVi(),
+                                            x.stream().map(item->item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add),
+                                            doanhSoCoSo
+                                    );
+                                }
+                        )
+                ))
+                .values().stream()
+                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
+                .limit(req.getPageSize())
+                .collect(Collectors.toList());
         return  data;
     }
 
@@ -142,6 +113,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         var items = list.stream()
                 .map(element->(GiaoDichHangHoa) element)
                 .collect(Collectors.toList());
+        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
+            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
+                    .collect(Collectors.toList());
+        }
 
         Calendar dateArchive = Calendar.getInstance();
         dateArchive.add(Calendar.YEAR, -1);
@@ -154,67 +129,35 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
         }
         List<TopMatHangRes> data = new ArrayList<>();
-        if(req.getLoaiBaoCao().equals(BaoCaoContains.MAT_HANG)){
-            data = items.stream()
-                    .collect(Collectors.groupingBy(
-                            GiaoDichHangHoa::getThuocId,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    x -> {
-                                        if (x.isEmpty()) {
-                                            return null;
-                                        }
-                                        var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                        BigDecimal slSoCoSo = BigDecimal.valueOf(0);
-
-                                        if(!duLieuCoSo.isParallel()){
-                                            slSoCoSo = duLieuCoSo.map(item-> item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                        }
-                                        return new TopMatHangRes(
-                                                x.get(0).getTenThuoc(),
-                                                x.get(0).getTenNhomThuoc(),
-                                                x.get(0).getTenDonVi(),
-                                                x.stream().map(item->item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                                slSoCoSo
-                                        );
+        data = items.stream()
+                .collect(Collectors.groupingBy(
+                        GiaoDichHangHoa::getThuocId,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                x -> {
+                                    if (x.isEmpty()) {
+                                        return null;
                                     }
-                            )
-                    ))
-                    .values().stream()
-                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                    .limit(req.getPageSize())
-                    .collect(Collectors.toList());
-        }else if(req.getLoaiBaoCao().equals(BaoCaoContains.NHOM_HANG)){
-            data = items.stream()
-                    .collect(Collectors.groupingBy(
-                            GiaoDichHangHoa::getNhomThuocId,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    x -> {
-                                        if (x.isEmpty()) {
-                                            return null;
-                                        }
-                                        var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                        BigDecimal slSoCoSo = BigDecimal.valueOf(0);
+                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
+                                    BigDecimal slSoCoSo = BigDecimal.valueOf(0);
 
-                                        if(!duLieuCoSo.isParallel()){
-                                            slSoCoSo = duLieuCoSo.map(item-> item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                        }
-                                        return new TopMatHangRes(
-                                                x.get(0).getTenThuoc(),
-                                                x.get(0).getTenNhomThuoc(),
-                                                x.get(0).getTenDonVi(),
-                                                x.stream().map(item->item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                                slSoCoSo
-                                        );
+                                    if(!duLieuCoSo.isParallel()){
+                                        slSoCoSo = duLieuCoSo.map(item-> item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add);
                                     }
-                            )
-                    ))
-                    .values().stream()
-                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                    .limit(req.getPageSize())
-                    .collect(Collectors.toList());
-        }
+                                    return new TopMatHangRes(
+                                            x.get(0).getTenThuoc(),
+                                            x.get(0).getTenNhomThuoc(),
+                                            x.get(0).getTenDonVi(),
+                                            x.stream().map(item->item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add),
+                                            slSoCoSo
+                                    );
+                                }
+                        )
+                ))
+                .values().stream()
+                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
+                .limit(req.getPageSize())
+                .collect(Collectors.toList());
 
         return data;
     }
@@ -232,6 +175,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         var items = list.stream()
                 .map(element -> (GiaoDichHangHoa) element)
                 .collect(Collectors.toList());
+        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
+            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
+                    .collect(Collectors.toList());
+        }
 
         Calendar dateArchive = Calendar.getInstance();
         dateArchive.add(Calendar.YEAR, -1);
@@ -243,128 +190,65 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         List<TopMatHangRes> data = new ArrayList<>();
+        data = items.parallelStream()
+                .collect(Collectors.groupingByConcurrent(
+                        GiaoDichHangHoa::getThuocId,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                x -> {
+                                    if (x.isEmpty()) return null;
 
-        if (req.getLoaiBaoCao().equals(BaoCaoContains.MAT_HANG)) {
-            data = items.parallelStream()
-                    .collect(Collectors.groupingByConcurrent(
-                            GiaoDichHangHoa::getThuocId,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    x -> {
-                                        if (x.isEmpty()) return null;
+                                    var duLieuCoSo = x.parallelStream()
+                                            .filter(item -> item.getMaCoSo().equals(userInfo.getMaCoSo()))
+                                            .collect(Collectors.toList());
 
-                                        var duLieuCoSo = x.parallelStream()
-                                                .filter(item -> item.getMaCoSo().equals(userInfo.getMaCoSo()))
-                                                .collect(Collectors.toList());
-
-                                        BigDecimal tslnCoSo = BigDecimal.ZERO;
-                                        if (!duLieuCoSo.isEmpty()) {
-                                            BigDecimal tongGB = duLieuCoSo.parallelStream()
-                                                    .map(GiaoDichHangHoa::getGiaBan)
-                                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                            BigDecimal tongGN = duLieuCoSo.parallelStream()
-                                                    .map(GiaoDichHangHoa::getGiaNhap)
-                                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                            if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
-                                                tslnCoSo = (tongGB.subtract(tongGN))
-                                                        .divide(tongGN, 2, RoundingMode.HALF_UP)
-                                                        .multiply(BigDecimal.valueOf(100));
-                                            }
-                                        }
-
-                                        BigDecimal tongGNTT = x.parallelStream()
-                                                .map(GiaoDichHangHoa::getGiaNhap)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        BigDecimal tongGBTT = x.parallelStream()
+                                    BigDecimal tslnCoSo = BigDecimal.ZERO;
+                                    if (!duLieuCoSo.isEmpty()) {
+                                        BigDecimal tongGB = duLieuCoSo.parallelStream()
                                                 .map(GiaoDichHangHoa::getGiaBan)
                                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                                        BigDecimal tslnTT = BigDecimal.ZERO;
-                                        if (tongGNTT.compareTo(BigDecimal.ZERO) > 0) {
-                                            tslnTT = (tongGBTT.subtract(tongGNTT))
-                                                    .divide(tongGNTT, 2, RoundingMode.HALF_UP)
-                                                    .multiply(BigDecimal.valueOf(100));
-                                        }
-
-                                        return new TopMatHangRes(
-                                                x.get(0).getTenThuoc(),
-                                                x.get(0).getTenNhomThuoc(),
-                                                x.get(0).getTenDonVi(),
-                                                tslnTT,
-                                                tslnCoSo
-                                        );
-                                    }
-                            )
-                    ))
-                    .values().parallelStream()
-                    .filter(Objects::nonNull)
-                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                    .limit(req.getPageSize())
-                    .collect(Collectors.toList());
-        } else if (req.getLoaiBaoCao().equals(BaoCaoContains.NHOM_HANG)) {
-            data = items.parallelStream()
-                    .collect(Collectors.groupingByConcurrent(
-                            GiaoDichHangHoa::getNhomThuocId,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    x -> {
-                                        if (x.isEmpty()) return null;
-
-                                        var duLieuCoSo = x.parallelStream()
-                                                .filter(item -> item.getMaCoSo().equals(userInfo.getMaCoSo()))
-                                                .collect(Collectors.toList());
-
-                                        BigDecimal tslnCoSo = BigDecimal.ZERO;
-                                        if (!duLieuCoSo.isEmpty()) {
-                                            BigDecimal tongGB = duLieuCoSo.parallelStream()
-                                                    .map(GiaoDichHangHoa::getGiaBan)
-                                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                            BigDecimal tongGN = duLieuCoSo.parallelStream()
-                                                    .map(GiaoDichHangHoa::getGiaNhap)
-                                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                            if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
-                                                tslnCoSo = (tongGB.subtract(tongGN))
-                                                        .divide(tongGN, 2, RoundingMode.HALF_UP)
-                                                        .multiply(BigDecimal.valueOf(100));
-                                            }
-                                        }
-
-                                        BigDecimal tongGNTT = x.parallelStream()
+                                        BigDecimal tongGN = duLieuCoSo.parallelStream()
                                                 .map(GiaoDichHangHoa::getGiaNhap)
                                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                                        BigDecimal tongGBTT = x.parallelStream()
-                                                .map(GiaoDichHangHoa::getGiaBan)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        BigDecimal tslnTT = BigDecimal.ZERO;
-                                        if (tongGNTT.compareTo(BigDecimal.ZERO) > 0) {
-                                            tslnTT = (tongGBTT.subtract(tongGNTT))
-                                                    .divide(tongGNTT, 2, RoundingMode.HALF_UP)
+                                        if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
+                                            tslnCoSo = (tongGB.subtract(tongGN))
+                                                    .divide(tongGN, 2, RoundingMode.HALF_UP)
                                                     .multiply(BigDecimal.valueOf(100));
                                         }
-
-                                        return new TopMatHangRes(
-                                                x.get(0).getTenThuoc(),
-                                                x.get(0).getTenNhomThuoc(),
-                                                x.get(0).getTenDonVi(),
-                                                tslnTT,
-                                                tslnCoSo
-                                        );
                                     }
-                            )
-                    ))
-                    .values().parallelStream()
-                    .filter(Objects::nonNull)
-                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                    .limit(req.getPageSize())
-                    .collect(Collectors.toList());
-        }
+
+                                    BigDecimal tongGNTT = x.parallelStream()
+                                            .map(GiaoDichHangHoa::getGiaNhap)
+                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                                    BigDecimal tongGBTT = x.parallelStream()
+                                            .map(GiaoDichHangHoa::getGiaBan)
+                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                                    BigDecimal tslnTT = BigDecimal.ZERO;
+                                    if (tongGNTT.compareTo(BigDecimal.ZERO) > 0) {
+                                        tslnTT = (tongGBTT.subtract(tongGNTT))
+                                                .divide(tongGNTT, 2, RoundingMode.HALF_UP)
+                                                .multiply(BigDecimal.valueOf(100));
+                                    }
+
+                                    return new TopMatHangRes(
+                                            x.get(0).getTenThuoc(),
+                                            x.get(0).getTenNhomThuoc(),
+                                            x.get(0).getTenDonVi(),
+                                            tslnTT,
+                                            tslnCoSo
+                                    );
+                                }
+                        )
+                ))
+                .values().parallelStream()
+                .filter(Objects::nonNull)
+                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
+                .limit(req.getPageSize())
+                .collect(Collectors.toList());
 
         return data;
     }

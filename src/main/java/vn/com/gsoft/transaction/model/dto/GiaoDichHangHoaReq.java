@@ -10,6 +10,8 @@ public class GiaoDichHangHoaReq extends BaseRequest {
     private Boolean dongBang;
     private Integer LoaiGiaoDich;
     private String maCoSo;
-    private Integer loaiBaoCao;
     private Integer pageSize;
+    private Integer nganhHangId;
+    private Integer nhomDuocLyId;
+    private Integer nhomHoatChatId;
 }

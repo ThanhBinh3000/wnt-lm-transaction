@@ -28,6 +28,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             + " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})"
             + " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})"
             + " AND ((:#{#param.dongBang} IS NULL) OR (c.DongBang = :#{#param.dongBang})) "
+            + " AND ((:#{#param.nhomDuocLyId} IS NULL) OR (c.nhomDuocLyId = :#{#param.nhomDuocLyId})) "
             + " ORDER BY c.NgayGiaoDich desc", nativeQuery = true
     )
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
