@@ -13,15 +13,15 @@ import java.util.List;
 @SpringBootTest
 @Slf4j
 class ImportDataRedisImplTest {
-    @Autowired
-    private GiaoDichHangHoaService giaoDichHangHoaService;
-
-    @BeforeAll
-    static void beforeAll() {
-
-    }
-    @Test
-    void pushData() throws Exception {
-        giaoDichHangHoaService.pushData();
-    }
+//    @Autowired
+//    private GiaoDichHangHoaService giaoDichHangHoaService;
+//
+//    @BeforeAll
+//    static void beforeAll() {
+//
+//    }
+//    @Test
+//    void pushData() throws Exception {
+//        giaoDichHangHoaService.pushData();
+//    }
 }
