@@ -275,9 +275,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     @Override
     public void pushData(){
         var rep = new GiaoDichHangHoaReq();
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.YEAR, -1);
-        rep.setFromDate(dateArchive.getTime());
+//        Calendar dateArchive = Calendar.getInstance();
+//        dateArchive.add(Calendar.YEAR, -1);
+        //rep.setFromDate(dateArchive.getTime());
+        rep.setDongBang(false);
         var list = hdrRepo.searchList(rep);
         redisListService.pushDataRedis(list);
     }
