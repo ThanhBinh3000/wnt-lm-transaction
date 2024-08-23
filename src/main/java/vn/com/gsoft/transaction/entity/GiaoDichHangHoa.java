@@ -51,4 +51,10 @@ public class GiaoDichHangHoa extends BaseEntity {
     private String maCoSo;
     @Column(name = "SoLuongQuyDoi")
     private BigDecimal soLuongQuyDoi;
+    @Column(name = "ThuocIdCs")
+    private Integer thuocIdCs;
+    @Column(name = "NhomHoatChatId")
+    private String nhomHoatChatId;
+    @Column(name = "NhomNganhHangId")
+    private BigDecimal nhomNganhHangId;
 }
