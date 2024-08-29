@@ -230,11 +230,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                                     BigDecimal tslnCoSo = BigDecimal.ZERO;
                                     if (!duLieuCoSo.isEmpty()) {
                                         BigDecimal tongGB = duLieuCoSo.parallelStream()
-                                                .map(GiaoDichHangHoa::getGiaBan)
+                                                .filter(xx->xx.getGiaBan() != null).map(GiaoDichHangHoa::getGiaBan)
                                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                                         BigDecimal tongGN = duLieuCoSo.parallelStream()
-                                                .map(GiaoDichHangHoa::getGiaNhap)
+                                                .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoa::getGiaNhap)
                                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                                         if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
@@ -245,11 +245,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                                     }
 
                                     BigDecimal tongGNTT = x.parallelStream()
-                                            .map(GiaoDichHangHoa::getGiaNhap)
+                                            .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoa::getGiaNhap)
                                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                                     BigDecimal tongGBTT = x.parallelStream()
-                                            .map(GiaoDichHangHoa::getGiaBan)
+                                            .filter(xx->xx.getGiaBan() != null).map(GiaoDichHangHoa::getGiaBan)
                                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                                     BigDecimal tslnTT = BigDecimal.ZERO;
