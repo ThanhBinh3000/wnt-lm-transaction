@@ -57,4 +57,8 @@ public class GiaoDichHangHoa extends BaseEntity {
     private Integer nhomHoatChatId;
     @Column(name = "NhomNganhHangId")
     private Integer nhomNganhHangId;
+    @Column(name = "MaPhieuChiTiet")
+    private Integer maPhieuChiTiet;
+    @Column(name = "TenNhomNganhHang")
+    private String tenNhomNganhHang;
 }
