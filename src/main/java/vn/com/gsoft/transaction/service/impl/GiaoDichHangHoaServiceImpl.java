@@ -51,10 +51,19 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         var items = list.stream()
                 .map(element->(GiaoDichHangHoa) element)
                 .collect(Collectors.toList());
+        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
+            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
+                    .collect(Collectors.toList());
+        }
         if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
             items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
                     .collect(Collectors.toList());
         }
+        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
+            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
+                    .collect(Collectors.toList());
+        }
+
         Calendar dateArchive = Calendar.getInstance();
         dateArchive.add(Calendar.YEAR, -1);
         //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
@@ -113,8 +122,16 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         var items = list.stream()
                 .map(element->(GiaoDichHangHoa) element)
                 .collect(Collectors.toList());
+        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
+            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
+                    .collect(Collectors.toList());
+        }
         if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
             items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
+                    .collect(Collectors.toList());
+        }
+        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
+            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
                     .collect(Collectors.toList());
         }
 
@@ -175,8 +192,16 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         var items = list.stream()
                 .map(element -> (GiaoDichHangHoa) element)
                 .collect(Collectors.toList());
+        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
+            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
+                    .collect(Collectors.toList());
+        }
         if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
             items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
+                    .collect(Collectors.toList());
+        }
+        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
+            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
                     .collect(Collectors.toList());
         }
 
@@ -275,9 +300,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     @Override
     public void pushData(){
         var rep = new GiaoDichHangHoaReq();
-//        Calendar dateArchive = Calendar.getInstance();
-//        dateArchive.add(Calendar.YEAR, -1);
-        //rep.setFromDate(dateArchive.getTime());
+        Calendar dateArchive = Calendar.getInstance();
+        dateArchive.add(Calendar.YEAR, -1);
+        rep.setFromDate(dateArchive.getTime());
         rep.setDongBang(false);
         var list = hdrRepo.searchList(rep);
         redisListService.pushDataRedis(list);

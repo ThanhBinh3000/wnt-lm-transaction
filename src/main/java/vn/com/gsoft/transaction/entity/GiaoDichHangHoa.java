@@ -54,7 +54,7 @@ public class GiaoDichHangHoa extends BaseEntity {
     @Column(name = "ThuocIdCs")
     private Integer thuocIdCs;
     @Column(name = "NhomHoatChatId")
-    private String nhomHoatChatId;
+    private Integer nhomHoatChatId;
     @Column(name = "NhomNganhHangId")
-    private BigDecimal nhomNganhHangId;
+    private Integer nhomNganhHangId;
 }
