@@ -10,6 +10,8 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class GiaoDichHangHoaRes extends BaseRequest {
+    private String tenNhomNganhHang;
+    private String ngay;
     private Long id ;
     private Long thuocId;
     private String tenThuoc;
@@ -47,5 +49,22 @@ public class GiaoDichHangHoaRes extends BaseRequest {
         this.soLuongThiTruong = soLuong;
         this.doanhThuCoSo = doanhThuCoSo;
         this.soLuongCoSo = soLuongCoSo;
+
+    }
+
+    public GiaoDichHangHoaRes(String ngay, String ten, String donVi, String hoatChatId, String duocLyId,
+                           String nhomNganhHangId, String tenNhomNganhHang, BigDecimal giaBan,
+                              BigDecimal giaNhap, BigDecimal soLuong, String maCoSo) {
+        this.ngay = ngay;
+        this.tenThuoc = ten;
+        this.tenDonVi = donVi;
+        this.tenHoatChat = hoatChatId;
+        this.tenNhomDuocLy = duocLyId;
+        this.tenNhomNganhHang = nhomNganhHangId;
+        this.tenNhomNganhHang = tenNhomNganhHang;
+        this.giaBan = giaBan;
+        this.giaNhap = giaNhap;
+        this.soLuong = soLuong;
+        this.maCoSo = maCoSo;
     }
 }

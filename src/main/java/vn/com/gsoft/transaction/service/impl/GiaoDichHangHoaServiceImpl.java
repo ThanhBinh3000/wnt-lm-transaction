@@ -304,11 +304,22 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     @Override
     public void pushData(){
         var rep = new GiaoDichHangHoaReq();
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.DATE, -10);
-        rep.setFromDate(dateArchive.getTime());
-        rep.setDongBang(false);
-        var list = hdrRepo.searchList(rep);
-        redisListService.pushDataRedis(list);
+        for(var i = 0 ;i < 4 ;i ++){
+            Calendar fdate = Calendar.getInstance();
+            fdate.add(Calendar.DATE, -(i + 1));
+            Calendar tdate = Calendar.getInstance();
+            tdate.add(Calendar.DATE, -(i));
+            rep.setFromDate(fdate.getTime());
+            rep.setToDate(tdate.getTime());
+            rep.setDongBang(false);
+            //nhap
+            rep.setLoaiGiaoDich(1);
+            var list = hdrRepo.searchList(rep);
+            redisListService.pushDataRedis(list);
+            //xua
+            rep.setLoaiGiaoDich(2);
+            var listx = hdrRepo.searchList(rep);
+            redisListService.pushDataRedis(listx);
+        }
     }
 }
