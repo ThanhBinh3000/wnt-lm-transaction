@@ -142,10 +142,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     x.setTenDonVi(hh.getTenDonVi());
                     x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
                 }
-                if(x.getGN().compareTo(BigDecimal.ZERO) > 0){
+                if(x.getGN().compareTo(BigDecimal.ZERO) > 0 && x.getGB() != null){
                     x.setSoLieuThiTruong((x.getGB().subtract(x.getGN()).divide(x.getGN(), 2, RoundingMode.HALF_UP)).multiply(BigDecimal.valueOf(100)));
                 }
-                if(x.getGNCS() != null && x.getGNCS().compareTo(BigDecimal.ZERO) > 0){
+                if(x.getGNCS() != null && x.getGNCS().compareTo(BigDecimal.ZERO) > 0 && x.getGBCS() != null){
                     x.setSoLieuCoSo((x.getGBCS().subtract(x.getGNCS()).divide(x.getGNCS(), 2, RoundingMode.HALF_UP)).multiply(BigDecimal.valueOf(100)));
                 }
             });
