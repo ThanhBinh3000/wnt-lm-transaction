@@ -1,6 +1,7 @@
 package vn.com.gsoft.transaction.service.impl;
 
 
+import com.ctc.wstx.util.DataUtil;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,13 +11,12 @@ import org.springframework.stereotype.Service;
 import vn.com.gsoft.transaction.constant.BaoCaoContains;
 import vn.com.gsoft.transaction.constant.LimitPageConstant;
 import vn.com.gsoft.transaction.entity.*;
-import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
-import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaRes;
-import vn.com.gsoft.transaction.model.dto.TopMatHangRes;
+import vn.com.gsoft.transaction.model.dto.*;
 import vn.com.gsoft.transaction.model.system.Profile;
 import vn.com.gsoft.transaction.repository.*;
 import vn.com.gsoft.transaction.service.GiaoDichHangHoaService;
 import vn.com.gsoft.transaction.service.RedisListService;
+import vn.com.gsoft.transaction.util.system.DataUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,12 +31,18 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     private GiaoDichHangHoaRepository hdrRepo;
     @Autowired
     private RedisListService redisListService;
+    @Autowired
+    private HangHoaRepository hangHoaRepo;
 
     @Autowired
-    public GiaoDichHangHoaServiceImpl(GiaoDichHangHoaRepository hdrRepo
+    public GiaoDichHangHoaServiceImpl(GiaoDichHangHoaRepository hdrRepo,
+                                      RedisListService redisListService,
+                                      HangHoaRepository hangHoaRepo
                                 ) {
         super(hdrRepo);
         this.hdrRepo = hdrRepo;
+        this.redisListService = redisListService;
+        this.hangHoaRepo = hangHoaRepo;
     }
     @Override
     public List<TopMatHangRes> topDoanhThuBanChay(GiaoDichHangHoaReq req) throws Exception{
@@ -45,142 +51,45 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             throw new Exception("Bad request.");
 
         setDefaultDates(req);
+        req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
 
-        var listData = redisListService.getTransactionsByTimeRangeAcrossDays(req.getFromDate(), req.getToDate());
-        return null;
-
-//        var list = redisListService.getGiaoDichHangHoaValues(req);
-//
-//        var items = list.stream()
-//                .map(element->(GiaoDichHangHoa) element)
-//                .collect(Collectors.toList());
-//        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
-//            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
-//                    .collect(Collectors.toList());
-//        }
-//        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-//            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-//                    .collect(Collectors.toList());
-//        }
-//        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-//            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-//                    .collect(Collectors.toList());
-//        }
-//
-//        Calendar dateArchive = Calendar.getInstance();
-//        dateArchive.add(Calendar.YEAR, -1);
-//        //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
-//        if(req.getFromDate().before(dateArchive.getTime())){
-//            req.setToDate(dateArchive.getTime());
-//            var listArchive = hdrRepo.searchList(req);
-//            if(!listArchive.stream().isParallel()){
-//                items.addAll(listArchive);
-//            }
-//        }
-//
-//        List<TopMatHangRes> data = new ArrayList<>();
-//
-//        data = items.stream()
-//                .collect(Collectors.groupingBy(
-//                        GiaoDichHangHoa::getThuocId,
-//                        Collectors.collectingAndThen(
-//                                Collectors.toList(),
-//                                x -> {
-//                                    if (x.isEmpty()) {
-//                                        return null;
-//                                    }
-//                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-//                                    BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
-//
-//                                    if(!duLieuCoSo.isParallel()){
-//                                        doanhSoCoSo = duLieuCoSo.map(item-> item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add);
-//                                    }
-//                                    return new TopMatHangRes(
-//                                            x.get(0).getTenThuoc(),
-//                                            x.get(0).getTenNhomThuoc(),
-//                                            x.get(0).getTenDonVi(),
-//                                            x.stream().map(item->item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add),
-//                                            doanhSoCoSo
-//                                    );
-//                                }
-//                        )
-//                ))
-//                .values().stream()
-//                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-//                .limit(req.getPageSize())
-//                .collect(Collectors.toList());
-//        return  data;
+        var listData = DataUtils.convertList(hdrRepo.groupByTopDoanhThu(req, req.getPageSize()), TopMatHangRes.class);
+        if(listData != null){
+            listData.forEach(x->{
+                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                if(hh != null){
+                    x.setTenThuoc(hh.getTenThuoc());
+                    x.setTenDonVi(hh.getTenDonVi());
+                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                }
+            });
+        }
+        return listData;
     }
 
     @Override
-    public List<TopMatHangRes> topSoLuongBanChay(GiaoDichHangHoaReq req) throws Exception{
+    public List<TopMatHangRes> topSLBanChay(GiaoDichHangHoaReq req) throws Exception{
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
 
         setDefaultDates(req);
+        req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
-        var list = redisListService.getGiaoDichHangHoaValues(req);
 
-        var items = list.stream()
-                .map(element->(GiaoDichHangHoa) element)
-                .collect(Collectors.toList());
-        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
-                    .collect(Collectors.toList());
+        var listData = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuong(req, req.getPageSize()), TopMatHangRes.class);
+        if(listData != null){
+            listData.forEach(x->{
+                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                if(hh != null){
+                    x.setTenThuoc(hh.getTenThuoc());
+                    x.setTenDonVi(hh.getTenDonVi());
+                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                }
+            });
         }
-        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-                    .collect(Collectors.toList());
-        }
-        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-                    .collect(Collectors.toList());
-        }
-
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.YEAR, -1);
-        //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
-        if(req.getFromDate().before(dateArchive.getTime())){
-            req.setToDate(dateArchive.getTime());
-            var listArchive = hdrRepo.searchList(req);
-            if(!listArchive.stream().isParallel()){
-                items.addAll(listArchive);
-            }
-        }
-        List<TopMatHangRes> data = new ArrayList<>();
-        data = items.stream()
-                .collect(Collectors.groupingBy(
-                        GiaoDichHangHoa::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) {
-                                        return null;
-                                    }
-                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                    BigDecimal slSoCoSo = BigDecimal.valueOf(0);
-
-                                    if(!duLieuCoSo.isParallel()){
-                                        slSoCoSo = duLieuCoSo.map(item-> item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    }
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomThuoc(),
-                                            x.get(0).getTenDonVi(),
-                                            x.stream().map(item->item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                            slSoCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().stream()
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-
-        return data;
+        return listData;
     }
 
     @Override
@@ -190,96 +99,27 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             throw new Exception("Bad request.");
 
         setDefaultDates(req);
+        req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
-        var list = redisListService.getGiaoDichHangHoaValues(req);
 
-        var items = list.stream()
-                .map(element -> (GiaoDichHangHoa) element)
-                .collect(Collectors.toList());
-        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
-                    .collect(Collectors.toList());
+        var listData = DataUtils.convertList(hdrRepo.groupByTopDoanhTSLN(req, req.getPageSize()), TopMatHangRes.class);
+        if(listData != null){
+            listData.forEach(x->{
+                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                if(hh != null){
+                    x.setTenThuoc(hh.getTenThuoc());
+                    x.setTenDonVi(hh.getTenDonVi());
+                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                }
+                if(x.getGN().compareTo(BigDecimal.ZERO) > 0){
+                    x.setSoLieuThiTruong((x.getGB().subtract(x.getGN()).divide(x.getGN(), 2, RoundingMode.HALF_UP)).multiply(BigDecimal.valueOf(100)));
+                }
+                if(x.getGNCS() != null && x.getGNCS().compareTo(BigDecimal.ZERO) > 0){
+                    x.setSoLieuCoSo((x.getGBCS().subtract(x.getGNCS()).divide(x.getGNCS(), 2, RoundingMode.HALF_UP)).multiply(BigDecimal.valueOf(100)));
+                }
+            });
         }
-        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-                    .collect(Collectors.toList());
-        }
-        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-                    .collect(Collectors.toList());
-        }
-
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.YEAR, -1);
-
-        // Kiểm tra thời gian xem báo cáo
-        if (req.getFromDate().before(dateArchive.getTime())) {
-            req.setToDate(dateArchive.getTime());
-            items.addAll(hdrRepo.searchList(req));
-        }
-
-        List<TopMatHangRes> data = new ArrayList<>();
-        data = items.parallelStream()
-                .collect(Collectors.groupingByConcurrent(
-                        GiaoDichHangHoa::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) return null;
-
-                                    var duLieuCoSo = x.parallelStream()
-                                            .filter(item -> item.getMaCoSo().equals(userInfo.getMaCoSo()))
-                                            .collect(Collectors.toList());
-
-                                    BigDecimal tslnCoSo = BigDecimal.ZERO;
-                                    if (!duLieuCoSo.isEmpty()) {
-                                        BigDecimal tongGB = duLieuCoSo.parallelStream()
-                                                .filter(xx->xx.getGiaBan() != null).map(GiaoDichHangHoa::getGiaBan)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        BigDecimal tongGN = duLieuCoSo.parallelStream()
-                                                .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoa::getGiaNhap)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
-                                            tslnCoSo = (tongGB.subtract(tongGN))
-                                                    .divide(tongGN, 2, RoundingMode.HALF_UP)
-                                                    .multiply(BigDecimal.valueOf(100));
-                                        }
-                                    }
-
-                                    BigDecimal tongGNTT = x.parallelStream()
-                                            .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoa::getGiaNhap)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                    BigDecimal tongGBTT = x.parallelStream()
-                                            .filter(xx->xx.getGiaBan() != null).map(GiaoDichHangHoa::getGiaBan)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                    BigDecimal tslnTT = BigDecimal.ZERO;
-                                    if (tongGNTT.compareTo(BigDecimal.ZERO) > 0) {
-                                        tslnTT = (tongGBTT.subtract(tongGNTT))
-                                                .divide(tongGNTT, 2, RoundingMode.HALF_UP)
-                                                .multiply(BigDecimal.valueOf(100));
-                                    }
-
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomThuoc(),
-                                            x.get(0).getTenDonVi(),
-                                            tslnTT,
-                                            tslnCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().parallelStream()
-                .filter(Objects::nonNull)
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-
-        return data;
+        return listData;
     }
 
     private void setDefaultDates(GiaoDichHangHoaReq req) {
@@ -304,22 +144,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     @Override
     public void pushData(){
         var rep = new GiaoDichHangHoaReq();
-        for(var i = 0 ;i < 4 ;i ++){
-            Calendar fdate = Calendar.getInstance();
-            fdate.add(Calendar.DATE, -(i + 1));
-            Calendar tdate = Calendar.getInstance();
-            tdate.add(Calendar.DATE, -(i));
-            rep.setFromDate(fdate.getTime());
-            rep.setToDate(tdate.getTime());
-            rep.setDongBang(false);
-            //nhap
-            rep.setLoaiGiaoDich(1);
-            var list = hdrRepo.searchList(rep);
-            redisListService.pushDataRedis(list);
-            //xua
-            rep.setLoaiGiaoDich(2);
-            var listx = hdrRepo.searchList(rep);
-            redisListService.pushDataRedis(listx);
-        }
+        Calendar fdate = Calendar.getInstance();
+        fdate.add(Calendar.YEAR, 1);
+        rep.setFromDate(fdate.getTime());
+        rep.setDongBang(false);
+        var list = hdrRepo.searchList(rep);
+        redisListService.pushDataRedis(list);
     }
 }
