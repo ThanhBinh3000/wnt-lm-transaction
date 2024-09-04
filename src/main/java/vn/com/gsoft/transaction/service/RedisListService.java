@@ -13,5 +13,6 @@ public interface RedisListService {
 
     List<Object> getGiaoDichHangHoaValues(GiaoDichHangHoaReq rep);
     void pushDataRedis(List<GiaoDichHangHoa> giaoDichHangHoas);
-    void pushDataToRedisByTime(List<Map<String, TopMatHangRes>> dataList, String time, String type);
+    void pushDataToRedisByTime(List<TopMatHangRes> dataList, String time, String type);
+    List<TopMatHangRes> getAllDataFromRedis(String code);
 }

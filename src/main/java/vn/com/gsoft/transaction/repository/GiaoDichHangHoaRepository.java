@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Repository
@@ -36,7 +37,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
 
     @Query(value = "SELECT TOP(:top) " +
             "'TenNhomNganhHang' AS tenNhomNganhHang, s.ThuocId, " +
-            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', 0 as 'GB', 0 as 'GN', 0 as 'GBCS', 0 as 'GNCS'" +
+            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', 0.0 as 'GB', 0.0 as 'GN', 0.0 as 'GBCS', 0.0 as 'GNCS'" +
             ", s.Tong as 'soLieuThiTruong'" +
             ", (SELECT SUM(c1.GiaBan * c1.SoLuong) FROM GiaoDichHangHoa c1" +
             " WHERE 1=1" +
@@ -60,13 +61,14 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
 
     @Query(value = "SELECT TOP(:top) " +
             "'TenNhomNganhHang' AS tenNhomNganhHang, s.ThuocId, " +
-            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', 0 as 'GB', 0 as 'GN', 0 as 'GBCS', 0 as 'GNCS'" +
+            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', 0.0 as 'GB', 0.0 as 'GN', 0.0 as 'GBCS', 0.0 as 'GNCS'" +
             ", s.Tong as 'soLieuThiTruong'" +
             ", (SELECT SUM(c1.SoLuong) FROM GiaoDichHangHoa c1" +
             " WHERE 1=1" +
             " AND c1.MaCoSo = :#{#param.maCoSo}" +
             " AND c1.ThuocId = s.ThuocId" +
             " AND (:#{#param.fromDate} IS NULL OR c1.NgayGiaoDich >= :#{#param.fromDate})" +
+            " AND ((:#{#param.loaiGiaoDich} IS NULL) OR (c1.LoaiGiaoDich = :#{#param.loaiGiaoDich})) "+
             " AND (:#{#param.toDate} IS NULL OR c1.NgayGiaoDich <= :#{#param.toDate})) as 'soLieuCoSo' FROM " +
             "(SELECT c.ThuocId, SUM(c.SoLuong) as Tong FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
@@ -75,6 +77,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             " AND (:#{#param.nhomDuocLyId} IS NULL) OR (c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
             " AND (:#{#param.nhomNganhHangId} IS NULL) OR (c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
             " AND (:#{#param.nhomHoatChatId} IS NULL) OR (c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " AND ((:#{#param.loaiGiaoDich} IS NULL) OR (c.LoaiGiaoDich = :#{#param.loaiGiaoDich})) "+
             " GROUP BY c.thuocId) s" +
             " ORDER BY s.Tong desc"
             , nativeQuery = true
@@ -118,4 +121,46 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> groupByTopDoanhTSLN(@Param("param") GiaoDichHangHoaReq param,
                                     @Param("top") Integer top);
+
+    @Query(value = "SELECT TOP(:top) " +
+            "s.tenNhomNganhHang, s.ThuocId, " +
+            "s.tenThuoc, s.tenDonVi, 0.0 as 'GB', 0.0 as 'GN', 0.0 as 'GBCS', 0.0 as 'GNCS'" +
+            ", s.Tong as 'soLieuThiTruong'" +
+            ", (SELECT SUM(c1.SoLuong) FROM GiaoDichHangHoa c1" +
+            " WHERE 1=1" +
+            " AND c1.MaCoSo = :#{#param.maCoSo}" +
+            " AND c1.ThuocId = s.ThuocId" +
+            " AND (:#{#param.fromDate} IS NULL OR c1.NgayGiaoDich >= :#{#param.fromDate})" +
+            " AND (:#{#param.toDate} IS NULL OR c1.NgayGiaoDich <= :#{#param.toDate})) as 'soLieuCoSo' FROM " +
+            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi, SUM(c.SoLuong) as Tong FROM GiaoDichHangHoa c" +
+            " WHERE 1=1 " +
+            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
+            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
+            " AND (:#{#param.nhomDuocLyId} IS NULL) OR (c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
+            " AND (:#{#param.nhomNganhHangId} IS NULL) OR (c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
+            " AND (:#{#param.nhomHoatChatId} IS NULL) OR (c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " AND ((:#{#param.loaiGiaoDich} IS NULL) OR (c.LoaiGiaoDich = :#{#param.loaiGiaoDich})) "+
+            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+            " ORDER BY s.Tong desc"
+            , nativeQuery = true
+    )
+    List<Tuple> groupByTopDoanhSoLuongPushRedis(@Param("param") GiaoDichHangHoaReq param ,
+                                       @Param("top") Integer top);
+    @Query(value =
+            "(SELECT c.ThuocId, SUM(c.SoLuong) as Tong FROM GiaoDichHangHoa c" +
+            " WHERE 1=1 " +
+            " AND c.MaCoSo = :#{#param.maCoSo}" +
+            " AND c.thuocId in (:ids)" +
+            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
+            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
+            " AND (:#{#param.nhomDuocLyId} IS NULL) OR (c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
+            " AND (:#{#param.nhomNganhHangId} IS NULL) OR (c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
+            " AND (:#{#param.nhomHoatChatId} IS NULL) OR (c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " AND ((:#{#param.loaiGiaoDich} IS NULL) OR (c.LoaiGiaoDich = :#{#param.loaiGiaoDich})) "+
+            " GROUP BY c.thuocId) s" +
+            " ORDER BY s.Tong desc"
+            , nativeQuery = true
+    )
+    List<Tuple> groupByTopDoanhSoLuongByMaCoSo(@Param("param") GiaoDichHangHoaReq param ,
+                                               @Param("ids") Long[] ids);
 }

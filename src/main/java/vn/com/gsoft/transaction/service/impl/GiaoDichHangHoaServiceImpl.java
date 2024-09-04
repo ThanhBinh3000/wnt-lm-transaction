@@ -20,6 +20,8 @@ import vn.com.gsoft.transaction.util.system.DataUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,18 +79,47 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         setDefaultDates(req);
         req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
+        req.setLoaiGiaoDich(2);
+        List<TopMatHangRes> listData = new ArrayList<TopMatHangRes>();
 
-        var listData = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuong(req, req.getPageSize()), TopMatHangRes.class);
-        if(listData != null){
-            listData.forEach(x->{
-                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
-                if(hh != null){
-                    x.setTenThuoc(hh.getTenThuoc());
-                    x.setTenDonVi(hh.getTenDonVi());
-                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
-                }
-            });
-        }
+//        String dateStr1 = "31/08/2024 00:00:00";
+//        String dateStr2 = "01/06/2024 00:00:00";
+//
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+//        if(dateFormat.parse(dateStr1).compareTo(req.getFromDate()) == 0 && dateFormat.parse(dateStr2).compareTo(req.getToDate()) == 0){
+//            listData = redisListService.getAllDataFromRedis("top-sl-3-thang-gan-nhat").stream()
+//                    .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong())).limit(req.getPageSize()).toList();
+//            //lấy ra list id
+//            if(userInfo.getMaCoSo() != null){
+//                Object[] ids = listData.stream().map(x->x.getThuocId()).toArray();
+//                var soLieuCoSo = hdrRepo.groupByTopDoanhSoLuongByMaCoSo(req, (Long[]) ids);
+//            }
+//
+//        }else {
+//            listData = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuong(req, req.getPageSize()), TopMatHangRes.class);
+//            if(listData != null){
+//                listData.forEach(x->{
+//                    var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+//                    if(hh != null){
+//                        x.setTenThuoc(hh.getTenThuoc());
+//                        x.setTenDonVi(hh.getTenDonVi());
+//                        x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+//                    }
+//                });
+//            }
+//        }
+
+        listData = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuong(req, req.getPageSize()), TopMatHangRes.class);
+            if(listData != null){
+                listData.forEach(x->{
+                    var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                    if(hh != null){
+                        x.setTenThuoc(hh.getTenThuoc());
+                        x.setTenDonVi(hh.getTenDonVi());
+                        x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                    }
+                });
+            }
         return listData;
     }
 
@@ -142,13 +173,21 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     }
 
     @Override
-    public void pushData(){
-        var rep = new GiaoDichHangHoaReq();
-        Calendar fdate = Calendar.getInstance();
-        fdate.add(Calendar.YEAR, 1);
-        rep.setFromDate(fdate.getTime());
-        rep.setDongBang(false);
-        var list = hdrRepo.searchList(rep);
-        redisListService.pushDataRedis(list);
+    public void pushData() throws Exception {
+        var req = new GiaoDichHangHoaReq();
+        //Calendar fdate = Calendar.getInstance();
+        //fdate.add(Calendar.MONTH, -3);
+        req.setLoaiGiaoDich(2);
+        //req.setFromDate(fdate.getTime());
+        String dateStr1 = "31/08/2024";
+        String dateStr2 = "01/06/2024";
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        req.setToDate(dateFormat.parse(dateStr1));
+        req.setFromDate(dateFormat.parse(dateStr2));
+        req.setDongBang(false);
+        var list = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuongPushRedis(req, 2000), TopMatHangRes.class);
+        redisListService.pushDataToRedisByTime(list, "top-sl", "3-thang-gan-nhat");
+
     }
 }

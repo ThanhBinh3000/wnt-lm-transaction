@@ -56,10 +56,16 @@ public class RedisListServiceImpl implements RedisListService {
         });
     }
 
-    public void pushDataToRedisByTime(List<Map<String, TopMatHangRes>> dataList, String time, String type) {
+    public void pushDataToRedisByTime(List<TopMatHangRes> dataList, String time, String type) {
         for (int i = 0; i < dataList.size(); i++) {
-            String key = type + "-" + time + ":" + i;
-            redisTemplate.opsForHash().putAll(key, dataList.get(i));
+            String key = time + "-" + type + ":" + i;
+            redisTemplate.opsForValue().set(key, dataList.get(i));
         }
+    }
+    public List<TopMatHangRes> getAllDataFromRedis(String code) {
+        Set<String> keys = redisTemplate.keys(code);
+        return keys.stream()
+                .map(key -> (TopMatHangRes) redisTemplate.opsForValue().get(key))
+                .collect(Collectors.toList());
     }
 }
