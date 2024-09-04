@@ -14,4 +14,5 @@ public class GiaoDichHangHoaReq extends BaseRequest {
     private Integer nganhHangId;
     private Integer nhomDuocLyId;
     private Integer nhomHoatChatId;
+    private Integer nhomNganhHangId;
 }

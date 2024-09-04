@@ -10,16 +10,13 @@ import java.util.Date;
 @Data
 public class TopMatHangRes {
     private String tenThuoc;
-    private String tenNhomThuoc;
+    private String tenNhomNganhHang;
     private String tenDonVi;
     private BigDecimal soLieuThiTruong;
     private BigDecimal soLieuCoSo;
-    public TopMatHangRes(String tenThuoc, String tenNhomThuoc, String tenDonVi,
-                         BigDecimal soLieuThiTruong, BigDecimal soLieuCoSo ) {
-        this.tenThuoc = tenThuoc;
-        this.tenNhomThuoc = tenNhomThuoc;
-        this.tenDonVi = tenDonVi;
-        this.soLieuThiTruong = soLieuThiTruong;
-        this.soLieuCoSo = soLieuCoSo;
-    }
+    private Long ThuocId;
+    private BigDecimal GB;
+    private BigDecimal GN;
+    private BigDecimal GBCS;
+    private BigDecimal GNCS;
 }

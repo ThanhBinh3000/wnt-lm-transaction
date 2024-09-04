@@ -27,7 +27,7 @@ public class TransactionController {
     @PostMapping(value = "top-so-luong", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<BaseResponse> topSoLuong(@RequestBody GiaoDichHangHoaReq objReq) throws Exception {
-        return ResponseEntity.ok(ResponseUtils.ok(service.topSoLuongBanChay(objReq)));
+        return ResponseEntity.ok(ResponseUtils.ok(service.topSLBanChay(objReq)));
     }
 
     @PostMapping(value = "top-tsln", produces = MediaType.APPLICATION_JSON_VALUE)
