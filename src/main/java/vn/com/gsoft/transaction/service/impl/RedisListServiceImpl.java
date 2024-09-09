@@ -1,5 +1,7 @@
 package vn.com.gsoft.transaction.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import vn.com.gsoft.transaction.constant.CachingConstant;
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
+import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaCache;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaRes;
 import vn.com.gsoft.transaction.model.dto.TopMatHangRes;
@@ -56,16 +59,54 @@ public class RedisListServiceImpl implements RedisListService {
         });
     }
 
-    public void pushDataToRedisByTime(List<TopMatHangRes> dataList, String time, String type) {
-        for (int i = 0; i < dataList.size(); i++) {
-            String key = time + "-" + type + ":" + i;
-            redisTemplate.opsForValue().set(key, dataList.get(i));
+    public void pushDataToRedisByTime(List<GiaoDichHangHoaCache> dataList, String key) {
+        dataList.forEach(x->{
+            try {
+                redisTemplate.opsForHash().put("transaction-detail", x.getMaPhieuChiTiet() + "_" + x.getLoaiGiaoDich(),
+                        objectMapper.writeValueAsString(x));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+//        try {
+//            var ids = dataList.stream().map(x->x.getMaPhieuChiTiet() + "_"+ x.getLoaiGiaoDich()).collect(Collectors.toList());
+//            redisTemplate.opsForHash().put("transaction-keys", key,
+//                    objectMapper.writeValueAsString(ids));
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+    }
+    public List<String> getAllDataKey(String key) {
+        try {
+            if(redisTemplate.opsForHash().hasKey("transaction-keys", key)){
+                // Lấy dữ liệu dưới dạng chuỗi JSON từ Redis Hash
+                String jsonData = (String) redisTemplate.opsForHash().get("transaction-keys", key);
+
+                // Chuyển đổi JSON thành List<MyData>
+                return objectMapper.readValue(jsonData, objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            }
+            return new ArrayList<>();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
-    public List<TopMatHangRes> getAllDataFromRedis(String code) {
-        Set<String> keys = redisTemplate.keys(code);
-        return keys.stream()
-                .map(key -> (TopMatHangRes) redisTemplate.opsForValue().get(key))
+
+    public List<GiaoDichHangHoaCache> getAllDataDetailByKeys(List<String> keys) throws Exception {
+        // Fetch data from Redis
+        List<Object> results = redisTemplate.opsForHash().multiGet("transaction-detail", Arrays.asList(keys));
+
+        // Convert JSON strings to objects
+        return results.stream()
+                .filter(result -> result != null) // Filter out null results
+                .map(result -> {
+                    try {
+                        return objectMapper.readValue(result.toString(), GiaoDichHangHoaCache.class);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to parse JSON", e);
+                    }
+                })
                 .collect(Collectors.toList());
     }
 }

@@ -3,6 +3,7 @@ package vn.com.gsoft.transaction.service.impl;
 
 import com.ctc.wstx.util.DataUtil;
 import lombok.extern.log4j.Log4j2;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,8 +21,12 @@ import vn.com.gsoft.transaction.util.system.DataUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -142,9 +147,6 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     x.setTenDonVi(hh.getTenDonVi());
                     x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
                 }
-                if(x.getGN().compareTo(BigDecimal.ZERO) > 0 && x.getGB() != null){
-                    x.setSoLieuThiTruong((x.getGB().subtract(x.getGN()).divide(x.getGN(), 2, RoundingMode.HALF_UP)).multiply(BigDecimal.valueOf(100)));
-                }
                 if(x.getGNCS() != null && x.getGNCS().compareTo(BigDecimal.ZERO) > 0 && x.getGBCS() != null){
                     x.setSoLieuCoSo((x.getGBCS().subtract(x.getGNCS()).divide(x.getGNCS(), 2, RoundingMode.HALF_UP)).multiply(BigDecimal.valueOf(100)));
                 }
@@ -174,20 +176,46 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
     @Override
     public void pushData() throws Exception {
-        var req = new GiaoDichHangHoaReq();
-        //Calendar fdate = Calendar.getInstance();
-        //fdate.add(Calendar.MONTH, -3);
-        req.setLoaiGiaoDich(2);
-        //req.setFromDate(fdate.getTime());
-        String dateStr1 = "31/08/2024";
-        String dateStr2 = "01/06/2024";
+        // Khởi tạo định dạng ngày tháng
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        req.setToDate(dateFormat.parse(dateStr1));
-        req.setFromDate(dateFormat.parse(dateStr2));
-        req.setDongBang(false);
-        var list = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuongPushRedis(req, 2000), TopMatHangRes.class);
-        redisListService.pushDataToRedisByTime(list, "top-sl", "3-thang-gan-nhat");
+        // Lấy ngày hiện tại
+        LocalDate today = LocalDate.now();
+
+        // Lấy ngày hôm nay của năm trước
+        LocalDate oneYearAgo = today.minusYears(1);
+
+        // Tạo danh sách các ngày từ ngày hiện tại trở về ngày của năm trước
+        LocalDate date = oneYearAgo;
+        List<String> keys = new ArrayList<>();
+        while (!date.isAfter(today)) {
+            // Chuyển LocalDate thành Date để in
+            LocalDateTime startOfDayTime = date.atStartOfDay();
+            LocalDateTime endOfDayTime = date.atTime(23, 59, 59);
+
+            Date startOfDay = Date.from(startOfDayTime.atZone(ZoneId.systemDefault()).toInstant());
+            Date endOfDay = Date.from(endOfDayTime.atZone(ZoneId.systemDefault()).toInstant());
+
+            var req = new GiaoDichHangHoaReq();
+            req.setFromDate(startOfDay);
+            req.setToDate(endOfDay);
+            Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
+            String pattern = "dd/MM/yyyy";
+            DateFormat df = new SimpleDateFormat(pattern);
+            var items = DataUtils.convertList(hdrRepo.searchListCache(req), GiaoDichHangHoaCache.class);
+            if (items.stream().count() > 0) {
+                var key = "transaction-" + df.format(todayWithZeroTime);
+                redisListService.pushDataToRedisByTime(items, key);
+            }
+//            var data = redisListService.getAllDataKey("transaction-" + df.format(todayWithZeroTime));
+//            keys.addAll(data);
+            // Di chuyển đến ngày kế tiếp
+            date = date.plusDays(1);
+        }
+//        List<GiaoDichHangHoaCache> dataLst = new ArrayList<GiaoDichHangHoaCache>();
+//        if((long) keys.size() > 0){
+//            dataLst = redisListService.getAllDataDetailByKeys(keys);
+//        }
 
     }
 }
