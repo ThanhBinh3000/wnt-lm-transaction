@@ -21,4 +21,5 @@ public class GiaoDichHangHoaCache {
     private Integer LoaiGiaoDich;
     private String maCoSo;
     private Integer maPhieuChiTiet;
+    private Integer nhomNganhHangId;
 }

@@ -30,7 +30,9 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             + " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})"
             + " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})"
             + " AND ((:#{#param.dongBang} IS NULL) OR (c.DongBang = :#{#param.dongBang})) "
-            + " AND ((:#{#param.nhomDuocLyId} IS NULL) OR (c.nhomDuocLyId = :#{#param.nhomDuocLyId})) "
+            + " AND ((:#{#param.nhomDuocLyId} IS NULL) OR (c.nhomDuocLyId = :#{#param.nhomDuocLyId})) " +
+            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
+            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) "
             + " ORDER BY c.NgayGiaoDich desc", nativeQuery = true
     )
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
@@ -171,7 +173,10 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             "c.tenNhomNganhHang, c.maPhieuChiTiet, c.nhomHoatChatId FROM GiaoDichHangHoa c " +
             "WHERE 1=1 "
             + " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})"
-            + " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})"
+            + " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
+            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
+            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
+            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) "
             + " ORDER BY c.NgayGiaoDich desc", nativeQuery = true
     )
     List<Tuple> searchListCache(@Param("param") GiaoDichHangHoaReq param);
