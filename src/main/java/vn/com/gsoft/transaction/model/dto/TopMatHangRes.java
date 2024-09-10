@@ -27,4 +27,7 @@ public class TopMatHangRes {
         this.soLieuThiTruong = soLieuThiTruong;
         this.soLieuCoSo = soLieuCoSo;
     }
+    public TopMatHangRes() {
+
+    }
 }

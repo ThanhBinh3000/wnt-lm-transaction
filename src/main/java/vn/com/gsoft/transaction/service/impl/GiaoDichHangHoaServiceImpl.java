@@ -2,6 +2,7 @@ package vn.com.gsoft.transaction.service.impl;
 
 
 import com.ctc.wstx.util.DataUtil;
+import jakarta.persistence.criteria.From;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +77,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
         var items = getDataRedis(req);
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
+            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
         }
         if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
@@ -146,7 +147,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
         var items = getDataRedis(req);
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
+            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
         }
         if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
@@ -216,7 +217,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
         var items = getDataRedis(req);
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
+            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
         }
         if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
@@ -349,6 +350,17 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
     }
 
+    public void pushDataThreeLastMonth() throws Exception {
+        var req = new GiaoDichHangHoaReq();
+        Calendar fdate = Calendar.getInstance();
+        fdate.add(Calendar.MONTH, -3);
+        req.setLoaiGiaoDich(2);
+        req.setFromDate(fdate.getTime());
+        req.setDongBang(false);
+        var list = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuongPushRedis(req, 2000), TopMatHangRes.class);
+        redisListService.pushDataToRedis(list, "top-sl", "3-thang-gan-nhat");
+    }
+
     private List<GiaoDichHangHoaCache> getDataRedis(GiaoDichHangHoaReq req) throws Exception {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -359,7 +371,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         List<GiaoDichHangHoaCache> dataLst = new ArrayList<GiaoDichHangHoaCache>();
         while (!fromDate.isAfter(toDate)) {
             String pattern = "dd/MM/yyyy";
-            Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
+            var datekey =  Date.from(fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date todayWithZeroTime = formatter.parse(formatter.format(datekey));
             DateFormat df = new SimpleDateFormat(pattern);
             var data = redisListService.getAllDataKey("transaction-" + df.format(todayWithZeroTime));
             dataLst.addAll(data);

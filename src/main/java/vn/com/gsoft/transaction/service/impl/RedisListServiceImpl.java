@@ -76,6 +76,13 @@ public class RedisListServiceImpl implements RedisListService {
 //            throw new RuntimeException(e);
 //        }
     }
+
+    public void pushDataToRedis(List<TopMatHangRes> dataList, String time, String type) {
+        for (int i = 0; i < dataList.size(); i++) {
+            String key = time + "-" + type + ":" + i;
+            redisTemplate.opsForValue().set(key, dataList.get(i));
+        }
+    }
     public List<GiaoDichHangHoaCache> getAllDataKey(String key) {
         try {
             if(redisTemplate.opsForHash().hasKey("transaction", key)){
@@ -106,4 +113,6 @@ public class RedisListServiceImpl implements RedisListService {
         });
         return  hangHoaCaches;
     }
+
+
 }
