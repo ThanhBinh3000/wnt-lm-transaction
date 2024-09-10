@@ -75,7 +75,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         var items = getDataRedis(req);
-        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
+        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
                     .collect(Collectors.toList());
         }
@@ -145,7 +145,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         var items = getDataRedis(req);
-        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
+        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
                     .collect(Collectors.toList());
         }
@@ -215,7 +215,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         var items = getDataRedis(req);
-        if(req.getNganhHangId() != null && req.getNganhHangId() > 0){
+        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNganhHangId()))
                     .collect(Collectors.toList());
         }
