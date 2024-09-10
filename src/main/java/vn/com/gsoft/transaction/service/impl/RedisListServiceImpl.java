@@ -114,5 +114,13 @@ public class RedisListServiceImpl implements RedisListService {
         return  hangHoaCaches;
     }
 
+    // Hàm lưu giao dịch vào Redis
+    public void saveTransaction(String transactionId, long transactionTimestamp, Map<String, GiaoDichHangHoaCache> transactionDetails) {
+        // 1. Lưu chi tiết giao dịch vào Hash
+        String transactionKey = "transaction:" + transactionId;
+        redisTemplate.opsForHash().putAll(transactionKey, transactionDetails);
 
+        // 2. Lưu transactionId vào Sorted Set với timestamp là score (để truy vấn theo ngày)
+        redisTemplate.opsForZSet().add("transactionsByDate", transactionId, transactionTimestamp);
+    }
 }

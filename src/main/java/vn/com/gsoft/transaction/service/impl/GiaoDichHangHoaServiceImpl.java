@@ -321,11 +321,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         LocalDate today = LocalDate.now();
 
         // Lấy ngày hôm nay của năm trước
-        LocalDate oneYearAgo = today.minusYears(1);
+        LocalDate oneYearAgo = today.minusMonths(2);
 
         // Tạo danh sách các ngày từ ngày hiện tại trở về ngày của năm trước
         LocalDate date = oneYearAgo;
         List<String> keys = new ArrayList<>();
+        List<GiaoDichHangHoaCache> allItems = new ArrayList<>();
         while (!date.isAfter(today)) {
             // Chuyển LocalDate thành Date để in
             LocalDateTime startOfDayTime = date.atStartOfDay();
@@ -337,17 +338,22 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             var req = new GiaoDichHangHoaReq();
             req.setFromDate(startOfDay);
             req.setToDate(endOfDay);
-            Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
-            String pattern = "dd/MM/yyyy";
-            DateFormat df = new SimpleDateFormat(pattern);
+//            Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
+//            String pattern = "dd/MM/yyyy";
+//            DateFormat df = new SimpleDateFormat(pattern);
             var items = DataUtils.convertList(hdrRepo.searchListCache(req), GiaoDichHangHoaCache.class);
-            if (items.stream().count() > 0) {
-                var key = "transaction-" + df.format(todayWithZeroTime);
-                redisListService.pushDataToRedisByTime(items, key);
-            }
+            allItems.addAll(items);
+//            if (items.stream().count() > 0) {
+//                var key = "transaction-" + df.format(todayWithZeroTime);
+//                redisListService.pushDataToRedisByTime(items, key);
+//            }
+
             date = date.plusDays(1);
         }
-
+        allItems.forEach(item->{
+            Map<String, GiaoDichHangHoaCache> data = new HashMap<>();
+            data.put(item.getMaPhieuChiTiet() +"_"+ item.getLoaiGiaoDich(), item);
+        });
     }
 
     public void pushDataThreeLastMonth() throws Exception {

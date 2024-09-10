@@ -18,4 +18,5 @@ public interface RedisListService {
     List<GiaoDichHangHoaCache> getAllDataKey(String key);
     List<GiaoDichHangHoaCache> getAllDataDetailByKeys(List<String> keys) throws Exception;
     void pushDataToRedis(List<TopMatHangRes> dataList, String time, String type);
+    void saveTransaction(String transactionId, long transactionTimestamp, Map<String, GiaoDichHangHoaCache> transactionDetails);
 }
