@@ -1,6 +1,7 @@
 package vn.com.gsoft.transaction.service;
 
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
+import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaCache;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaRes;
 import vn.com.gsoft.transaction.model.dto.TopMatHangRes;
@@ -13,6 +14,7 @@ public interface RedisListService {
 
     List<Object> getGiaoDichHangHoaValues(GiaoDichHangHoaReq rep);
     void pushDataRedis(List<GiaoDichHangHoa> giaoDichHangHoas);
-    void pushDataToRedisByTime(List<TopMatHangRes> dataList, String time, String type);
-    List<TopMatHangRes> getAllDataFromRedis(String code);
+    void pushDataToRedisByTime(List<GiaoDichHangHoaCache> dataList, String key);
+    List<GiaoDichHangHoaCache> getAllDataKey(String key);
+    List<GiaoDichHangHoaCache> getAllDataDetailByKeys(List<String> keys) throws Exception;
 }

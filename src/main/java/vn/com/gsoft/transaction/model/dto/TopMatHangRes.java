@@ -19,4 +19,12 @@ public class TopMatHangRes {
     private BigDecimal GN;
     private BigDecimal GBCS;
     private BigDecimal GNCS;
+    public TopMatHangRes(String tenThuoc, String tenNhomNganhHang, String tenDonVi,
+                         BigDecimal soLieuThiTruong, BigDecimal soLieuCoSo ) {
+        this.tenThuoc = tenThuoc;
+        this.tenNhomNganhHang = tenNhomNganhHang;
+        this.tenDonVi = tenDonVi;
+        this.soLieuThiTruong = soLieuThiTruong;
+        this.soLieuCoSo = soLieuCoSo;
+    }
 }

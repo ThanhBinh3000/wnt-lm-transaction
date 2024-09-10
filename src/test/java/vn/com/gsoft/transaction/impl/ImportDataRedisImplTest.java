@@ -20,7 +20,7 @@ class ImportDataRedisImplTest {
 //    static void beforeAll() {
 //
 //    }
-    //@Test
+    @Test
     void pushData() throws Exception {
         giaoDichHangHoaService.pushData();
     }
