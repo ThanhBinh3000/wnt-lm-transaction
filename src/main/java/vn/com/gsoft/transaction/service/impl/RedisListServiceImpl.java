@@ -126,7 +126,7 @@ public class RedisListServiceImpl implements RedisListService {
         }
         if(dataKeyFirst != null){
             data = dataKeyFirst.values().stream()
-                    .filter(obj -> obj instanceof HangHoaDaTinhToanCache)
+                    .filter(obj -> obj instanceof HangHoaDaTinhToanCache && ((HangHoaDaTinhToanCache) obj).getSoLieuThiTruong() != null)
                     .map(obj -> (HangHoaDaTinhToanCache) obj)
                     .collect(Collectors.toList());
             data.sort(Comparator.comparing(HangHoaDaTinhToanCache::getSoLieuThiTruong).reversed());

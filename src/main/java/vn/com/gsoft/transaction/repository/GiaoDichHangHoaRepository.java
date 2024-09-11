@@ -180,4 +180,33 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             + " ORDER BY c.NgayGiaoDich desc", nativeQuery = true
     )
     List<Tuple> searchListCache(@Param("param") GiaoDichHangHoaReq param);
+
+    @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(c.GiaBan * c.SoLuong) as 'ban' , 0.0 as 'nhap', 0.0 as 'soLuong'" +
+            " FROM GiaoDichHangHoa c" +
+            " WHERE 1=1 " +
+            " AND c.maCoSo = :#{#param.maCoSo}" +
+            " AND c.ThuocId in (:#{#param.thuocIds})" +
+            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
+            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
+            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
+            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
+            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " GROUP BY c.thuocId"
+            , nativeQuery = true
+    )
+    List<Tuple> groupByTopDoanhThuCS(@Param("param") GiaoDichHangHoaReq param);
+    @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(CASE WHEN c.LoaiGiaoDich = 2 THEN SoLuong ELSE 0.0 END) as 'soLuong' , 0.0 as 'nhap', 0.0 as 'ban'" +
+            " FROM GiaoDichHangHoa c" +
+            " WHERE 1=1 " +
+            " AND c.maCoSo = :#{#param.maCoSo}" +
+            " AND c.ThuocId in (:#{#param.thuocIds})" +
+            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
+            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
+            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
+            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
+            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " GROUP BY c.thuocId"
+            , nativeQuery = true
+    )
+    List<Tuple> groupByTopSLCS(@Param("param") GiaoDichHangHoaReq param);
 }

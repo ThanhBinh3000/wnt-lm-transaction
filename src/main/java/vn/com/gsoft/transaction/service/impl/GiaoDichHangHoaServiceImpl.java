@@ -65,6 +65,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         dateArchive.add(Calendar.YEAR, -1);
 
         var items = getDataRedis(req, BaoCaoContains.DOANH_THU);
+        if(items == null || items.isEmpty()) return new ArrayList<>();
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
@@ -77,7 +78,21 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
                     .collect(Collectors.toList());
         }
-        return  items.stream().limit(req.getPageSize()).toList();
+        items = items.stream().limit(req.getPageSize()).toList();
+        //lấy ra doanh so cs
+        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+            req.setThuocIds(ids.toArray(new Long[ids.size()]));
+            var dataCS = DataUtils.convertList(hdrRepo.groupByTopDoanhThuCS(req), DoanhThuCS.class);
+            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            items.forEach(x->{
+                if(groupBy.containsKey(x.getThuocId())){
+                    var value = groupBy.get(x.getThuocId());
+                    x.setSoLieuCoSo(value.get(0).getBan());
+                }
+            });
+        }
+        return  items;
     }
 
     @Override
@@ -104,20 +119,23 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         var items = getDataRedis(req, BaoCaoContains.SO_LUONG);
-        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
-                    .collect(Collectors.toList());
-        }
-        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-                    .collect(Collectors.toList());
-        }
-        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-                    .collect(Collectors.toList());
-        }
+        if(items == null || items.isEmpty()) return new ArrayList<>();
 
-        return  items.stream().limit(req.getPageSize()).toList();
+        items = items.stream().limit(req.getPageSize()).toList();
+        //lấy ra doanh so cs
+        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+            req.setThuocIds(ids.toArray(new Long[ids.size()]));
+            var dataCS = DataUtils.convertList(hdrRepo.groupByTopSLCS(req), DoanhThuCS.class);
+            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            items.forEach(x->{
+                if(groupBy.containsKey(x.getThuocId())){
+                    var value = groupBy.get(x.getThuocId());
+                    x.setSoLieuCoSo(value.get(0).getSoLuong());
+                }
+            });
+        }
+        return  items;
     }
 
     @Override
@@ -143,6 +161,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setToDate(toDate);
         }
         var items = getDataRedis(req, BaoCaoContains.TSLN);
+        if(items == null || items.isEmpty()) return new ArrayList<>();
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
