@@ -2,6 +2,7 @@ package vn.com.gsoft.transaction.service.impl;
 
 
 import com.ctc.wstx.util.DataUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.criteria.From;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.protocol.types.Field;
@@ -53,7 +54,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         this.hangHoaRepo = hangHoaRepo;
     }
     @Override
-    public List<TopMatHangRes> topDoanhThuBanChay(GiaoDichHangHoaReq req) throws Exception{
+    public List<HangHoaDaTinhToanCache> topDoanhThuBanChay(GiaoDichHangHoaReq req) throws Exception{
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
@@ -62,20 +63,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
         Calendar dateArchive = Calendar.getInstance();
         dateArchive.add(Calendar.YEAR, -1);
-        List<GiaoDichHangHoaCache> dataArchive = new ArrayList<>();
-        //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
-        var toDate = req.getToDate();
-        if(req.getFromDate().before(dateArchive.getTime())){
-            req.setToDate(dateArchive.getTime());
-            var listArchive = hdrRepo.searchListCache(req);
-            if(!listArchive.stream().isParallel()){
-                dataArchive.addAll(DataUtils.convertList(listArchive, GiaoDichHangHoaCache.class));
-            }
-            req.setFromDate(dateArchive.getTime());
-            req.setToDate(toDate);
-        }
 
-        var items = getDataRedis(req);
+        var items = getDataRedis(req, BaoCaoContains.DOANH_THU);
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
@@ -88,42 +77,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
                     .collect(Collectors.toList());
         }
-        items.addAll(dataArchive);
-
-        List<TopMatHangRes> data = items.stream()
-                .collect(Collectors.groupingBy(
-                        GiaoDichHangHoaCache::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) {
-                                        return null;
-                                    }
-                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                    BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
-
-                                    if(!duLieuCoSo.isParallel()){
-                                        doanhSoCoSo = duLieuCoSo.map(item-> item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    }
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomNganhHang(),
-                                            x.get(0).getTenDonVi(),
-                                            x.stream().map(item->item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                            doanhSoCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().stream()
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-        return  data;
+        return  items.stream().limit(req.getPageSize()).toList();
     }
 
     @Override
-    public List<TopMatHangRes> topSLBanChay(GiaoDichHangHoaReq req) throws Exception{
+    public List<HangHoaDaTinhToanCache> topSLBanChay(GiaoDichHangHoaReq req) throws Exception{
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
@@ -145,7 +103,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setToDate(toDate);
         }
 
-        var items = getDataRedis(req);
+        var items = getDataRedis(req, BaoCaoContains.SO_LUONG);
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
@@ -158,42 +116,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
                     .collect(Collectors.toList());
         }
-        items.addAll(dataArchive);
 
-        List<TopMatHangRes> data = items.stream()
-                .collect(Collectors.groupingBy(
-                        GiaoDichHangHoaCache::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) {
-                                        return null;
-                                    }
-                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                    BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
-
-                                    if(!duLieuCoSo.isParallel()){
-                                        doanhSoCoSo = duLieuCoSo.map(item-> item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    }
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomNganhHang(),
-                                            x.get(0).getTenDonVi(),
-                                            x.stream().map(item->item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                            doanhSoCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().stream()
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-        return  data;
+        return  items.stream().limit(req.getPageSize()).toList();
     }
 
     @Override
-    public List<TopMatHangRes> topTSLNCaoNhat(GiaoDichHangHoaReq req) throws Exception {
+    public List<HangHoaDaTinhToanCache> topTSLNCaoNhat(GiaoDichHangHoaReq req) throws Exception {
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
@@ -214,8 +142,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setFromDate(dateArchive.getTime());
             req.setToDate(toDate);
         }
-
-        var items = getDataRedis(req);
+        var items = getDataRedis(req, BaoCaoContains.TSLN);
         if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
             items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
                     .collect(Collectors.toList());
@@ -228,69 +155,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
                     .collect(Collectors.toList());
         }
-        items.addAll(dataArchive);
-        List<TopMatHangRes> data = items.parallelStream()
-                .collect(Collectors.groupingByConcurrent(
-                        GiaoDichHangHoaCache::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) return null;
 
-                                    var duLieuCoSo = x.parallelStream()
-                                            .filter(item -> item.getMaCoSo().equals(userInfo.getMaCoSo()))
-                                            .collect(Collectors.toList());
-
-                                    BigDecimal tslnCoSo = BigDecimal.ZERO;
-                                    if (!duLieuCoSo.isEmpty()) {
-                                        BigDecimal tongGB = duLieuCoSo.parallelStream()
-                                                .filter(xx->xx.getGiaBan() != null && xx.getLoaiGiaoDich() == 2 && xx.getGiaBan().compareTo(BigDecimal.ZERO) > 0)
-                                                .map(GiaoDichHangHoaCache::getGiaBan)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        BigDecimal tongGN = duLieuCoSo.parallelStream()
-                                                .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoaCache::getGiaNhap)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
-                                            tslnCoSo = (tongGB.subtract(tongGN))
-                                                    .divide(tongGN, 2, RoundingMode.HALF_UP)
-                                                    .multiply(BigDecimal.valueOf(100));
-                                        }
-                                    }
-
-                                    BigDecimal tongGNTT = x.parallelStream()
-                                            .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoaCache::getGiaNhap)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                    BigDecimal tongGBTT = x.parallelStream()
-                                            .filter(xx->xx.getGiaBan() != null).map(GiaoDichHangHoaCache::getGiaBan)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                    BigDecimal tslnTT = BigDecimal.ZERO;
-                                    if (tongGNTT.compareTo(BigDecimal.ZERO) > 0) {
-                                        tslnTT = (tongGBTT.subtract(tongGNTT))
-                                                .divide(tongGNTT, 2, RoundingMode.HALF_UP)
-                                                .multiply(BigDecimal.valueOf(100));
-                                    }
-
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomNganhHang(),
-                                            x.get(0).getTenDonVi(),
-                                            tslnTT,
-                                            tslnCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().parallelStream()
-                .filter(Objects::nonNull)
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-
-        return data;
+        return  items.stream().limit(req.getPageSize()).toList();
     }
 
     private void setDefaultDates(GiaoDichHangHoaReq req) {
@@ -314,21 +180,15 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
     @Override
     public void pushData() throws Exception {
-        // Khởi tạo định dạng ngày tháng
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        // Lấy ngày hiện tại
         LocalDate today = LocalDate.now();
+        LocalDate oneYearAgo = today.minusYears(1);
 
-        // Lấy ngày hôm nay của năm trước
-        LocalDate oneYearAgo = today.minusMonths(2);
-
-        // Tạo danh sách các ngày từ ngày hiện tại trở về ngày của năm trước
         LocalDate date = oneYearAgo;
         List<String> keys = new ArrayList<>();
         List<GiaoDichHangHoaCache> allItems = new ArrayList<>();
         while (!date.isAfter(today)) {
-            // Chuyển LocalDate thành Date để in
             LocalDateTime startOfDayTime = date.atStartOfDay();
             LocalDateTime endOfDayTime = date.atTime(23, 59, 59);
 
@@ -338,22 +198,37 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             var req = new GiaoDichHangHoaReq();
             req.setFromDate(startOfDay);
             req.setToDate(endOfDay);
-//            Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
-//            String pattern = "dd/MM/yyyy";
-//            DateFormat df = new SimpleDateFormat(pattern);
+           Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
+           String pattern = "dd/MM/yyyy";
+            DateFormat df = new SimpleDateFormat(pattern);
             var items = DataUtils.convertList(hdrRepo.searchListCache(req), GiaoDichHangHoaCache.class);
-            allItems.addAll(items);
-//            if (items.stream().count() > 0) {
-//                var key = "transaction-" + df.format(todayWithZeroTime);
-//                redisListService.pushDataToRedisByTime(items, key);
-//            }
-
+           if (items.stream().count() > 0) {
+               var groupBy = items.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+               groupBy.keySet().forEach(x->{
+                   var key = df.format(todayWithZeroTime);
+                   var values = groupBy.get(x);
+                   HangHoaDaTinhToanCache hh = new HangHoaDaTinhToanCache();
+                   hh.setThuocId(x);
+                   hh.setTenThuoc(values.get(0).getTenThuoc());
+                   hh.setTenNhomNganhHang(values.get(0).getTenNhomNganhHang());
+                   hh.setTenDonVi(values.get(0).getTenDonVi());
+                   hh.setNhomDuocLyId(values.get(0).getNhomDuocLyId());
+                   hh.setNhomNganhHangId(values.get(0).getNhomNganhHangId());
+                   hh.setNhomHoatChatId(values.get(0).getNhomHoatChatId());
+                   hh.setTongBan(values.stream().filter(xx->xx.getLoaiGiaoDich() == 2)
+                           .map(xx->xx.getGiaBan().multiply(xx.getSoLuong()))
+                           .reduce(BigDecimal.ZERO, BigDecimal::add));
+                   hh.setTongNhap(values.stream().filter(xx->xx.getLoaiGiaoDich() == 1)
+                           .map(xx->xx.getGiaNhap().multiply(xx.getSoLuong()))
+                           .reduce(BigDecimal.ZERO, BigDecimal::add));
+                   hh.setSoLuong(values.stream().filter(xx->xx.getLoaiGiaoDich() == 2)
+                           .map(xx->xx.getSoLuong())
+                           .reduce(BigDecimal.ZERO, BigDecimal::add));
+                   redisListService.pushDataToRedisByTime(hh, key);
+               });
+            }
             date = date.plusDays(1);
         }
-        allItems.forEach(item->{
-            Map<String, GiaoDichHangHoaCache> data = new HashMap<>();
-            data.put(item.getMaPhieuChiTiet() +"_"+ item.getLoaiGiaoDich(), item);
-        });
     }
 
     public void pushDataThreeLastMonth() throws Exception {
@@ -364,30 +239,28 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         req.setFromDate(fdate.getTime());
         req.setDongBang(false);
         var list = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuongPushRedis(req, 2000), TopMatHangRes.class);
-        redisListService.pushDataToRedis(list, "top-sl", "3-thang-gan-nhat");
+        //redisListService.pushDataToRedis(list, "top-sl", "3-thang-gan-nhat");
     }
 
-    private List<GiaoDichHangHoaCache> getDataRedis(GiaoDichHangHoaReq req) throws Exception {
+    private List<HangHoaDaTinhToanCache> getDataRedis(GiaoDichHangHoaReq req, int type) throws Exception {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         LocalDate toDate = convertToLocalDate(req.getToDate());
-
         LocalDate fromDate = convertToLocalDate(req.getFromDate());
         List<String> keys = new ArrayList<>();
-        List<GiaoDichHangHoaCache> dataLst = new ArrayList<GiaoDichHangHoaCache>();
+
         while (!fromDate.isAfter(toDate)) {
             String pattern = "dd/MM/yyyy";
             var datekey =  Date.from(fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date todayWithZeroTime = formatter.parse(formatter.format(datekey));
             DateFormat df = new SimpleDateFormat(pattern);
-            var data = redisListService.getAllDataKey("transaction-" + df.format(todayWithZeroTime));
-            dataLst.addAll(data);
+            keys.add(df.format(todayWithZeroTime));
             fromDate = fromDate.plusDays(1);
         }
-       return dataLst;
+
+        return redisListService.getAllDataDetailByKeys(keys, type);
     }
 
-    // Hàm chuyển đổi Date sang LocalDate
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }

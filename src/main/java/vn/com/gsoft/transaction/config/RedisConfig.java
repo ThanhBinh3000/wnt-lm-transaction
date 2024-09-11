@@ -9,10 +9,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.GenericToStringSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.serializer.*;
 import vn.com.gsoft.transaction.constant.CachingConstant;
 
 import java.time.Duration;
@@ -59,13 +56,11 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
 
-//        // Serializer cho key là String
-//        template.setKeySerializer(new StringRedisSerializer());
-//
-//        // Serializer cho value là đối tượng GiaoDichHangHoa
-//        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setKeySerializer(new GenericToStringSerializer<>(String.class));
-        template.setValueSerializer(new GenericToStringSerializer<>(Object.class));
+        // Serializer cho key là String
+        template.setKeySerializer(new StringRedisSerializer());
+
+        // Serializer cho value là đối tượng GiaoDichHangHoa
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         return template;
     }
