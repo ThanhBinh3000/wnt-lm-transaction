@@ -59,21 +59,23 @@ public interface GiaoDichHH_T4_2024Repository extends CrudRepository<GiaoDichHan
 
     @Query(value = "SELECT TOP(:top) " +
             "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi" +
-            ", s.Tong as 'soLieuThiTruong'" +
+            "s.tenThuoc, s.tenDonVi, " +
+            "(CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
             ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
             "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
             " FROM " +
             "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-            ", MAX(c.TSLN) as Tong FROM GiaoDichHangHoa_T4_2024 c" +
+            ", SUM(c.tongNhap) as tongNhap, SUM(c.tongBan) as tongBan " +
+            "FROM GiaoDichHangHoa_T4_2024 c" +
             " WHERE 1=1 " +
             " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
             " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
             " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
             " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
             " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " AND c.tsln < 500"+
             " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY s.Tong desc"
+            " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc"
             , nativeQuery = true
     )
     List<Tuple> groupByTopTSLN(@Param("param") GiaoDichHangHoaReq param, Integer top);
