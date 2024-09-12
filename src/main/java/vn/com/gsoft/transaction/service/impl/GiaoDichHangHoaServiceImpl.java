@@ -2,9 +2,12 @@ package vn.com.gsoft.transaction.service.impl;
 
 
 import com.ctc.wstx.util.DataUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.From;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.protocol.types.Field;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import vn.com.gsoft.transaction.constant.BaoCaoContains;
 import vn.com.gsoft.transaction.constant.LimitPageConstant;
+import vn.com.gsoft.transaction.constant.LoaiTableContains;
 import vn.com.gsoft.transaction.entity.*;
 import vn.com.gsoft.transaction.model.dto.*;
 import vn.com.gsoft.transaction.model.system.Profile;
@@ -27,7 +31,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,256 +48,378 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     private RedisListService redisListService;
     @Autowired
     private HangHoaRepository hangHoaRepo;
+    @Autowired
+    private GiaoDichHH_T8_2024Repository hdrRepoT8;
+    @Autowired
+    private GiaoDichHH_T7_2024Repository hdrRepoT7;
+    @Autowired
+    private GiaoDichHH_T6_2024Repository hdrRepoT6;
+    @Autowired
+    private GiaoDichHH_T5_2024Repository hdrRepoT5;
+    @Autowired
+    private GiaoDichHH_T4_2024Repository hdrRepoT4;
+    @Autowired
+    private GiaoDichHH_T3_2024Repository hdrRepoT3;
+    @Autowired
+    private GiaoDichHH_T2_2024Repository hdrRepoT2;
+    @Autowired
+    private GiaoDichHH_T1_2024Repository hdrRepoT1;
 
     @Autowired
     public GiaoDichHangHoaServiceImpl(GiaoDichHangHoaRepository hdrRepo,
                                       RedisListService redisListService,
-                                      HangHoaRepository hangHoaRepo
+                                      HangHoaRepository hangHoaRepo,
+                                      GiaoDichHH_T3_2024Repository hdrRepoT3,
+                                      GiaoDichHH_T4_2024Repository hdrRepoT4,
+                                      GiaoDichHH_T5_2024Repository hdrRepoT5,
+                                      GiaoDichHH_T6_2024Repository hdrRepoT6,
+                                      GiaoDichHH_T7_2024Repository hdrRepoT7,
+                                      GiaoDichHH_T8_2024Repository hdrRepoT8,
+                                      GiaoDichHH_T1_2024Repository hdrRepoT1,
+                                      GiaoDichHH_T2_2024Repository hdrRepoT2
                                 ) {
         super(hdrRepo);
         this.hdrRepo = hdrRepo;
         this.redisListService = redisListService;
         this.hangHoaRepo = hangHoaRepo;
+        this.hdrRepoT1 = hdrRepoT1;
+        this.hdrRepoT2 = hdrRepoT2;
+        this.hdrRepoT3 = hdrRepoT3;
+        this.hdrRepoT4 = hdrRepoT4;
+        this.hdrRepoT5 = hdrRepoT5;
+        this.hdrRepoT6 = hdrRepoT6;
+        this.hdrRepoT7 = hdrRepoT7;
+        this.hdrRepoT8 = hdrRepoT8;
     }
     @Override
-    public List<TopMatHangRes> topDoanhThuBanChay(GiaoDichHangHoaReq req) throws Exception{
+    public List<HangHoaDaTinhToanCache> topDoanhThuBanChay(GiaoDichHangHoaReq req) throws Exception{
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
         setDefaultDates(req);
         req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.YEAR, -1);
-        List<GiaoDichHangHoaCache> dataArchive = new ArrayList<>();
-        //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
-        var toDate = req.getToDate();
-        if(req.getFromDate().before(dateArchive.getTime())){
-            req.setToDate(dateArchive.getTime());
-            var listArchive = hdrRepo.searchListCache(req);
-            if(!listArchive.stream().isParallel()){
-                dataArchive.addAll(DataUtils.convertList(listArchive, GiaoDichHangHoaCache.class));
+
+        List<HangHoaDaTinhToanCache> items = new ArrayList<>();
+        List<Tuple> tops= new ArrayList<>();
+        LocalDate fDate = req.getFromDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        LocalDate tDate = req.getToDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        var months = ChronoUnit.MONTHS.between(fDate, tDate);
+        LocalDate startfDate = fDate.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate endtDate = tDate.with(TemporalAdjusters.lastDayOfMonth());
+        var isStart = startfDate.getDayOfMonth() == fDate.getDayOfMonth();
+        var isEnd = endtDate.getDayOfMonth() == tDate.getDayOfMonth();
+        if(months >= 1 && months < 11 && isStart && isEnd){
+            var arrMonth = new ArrayList<Integer>();
+            for (var  i = 0 ; i < months + 1; i++){
+                arrMonth.add(fDate.getMonthValue() + i);
             }
-            req.setFromDate(dateArchive.getTime());
-            req.setToDate(toDate);
+            req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
+            items = DataUtils.convertList(hdrRepo.groupByTopDTT0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
+        if(months >= 1 && months < 11 && (!isStart || !isEnd)){
+            var arrMonth = new ArrayList<Integer>();
+            var count = 0;
+            var addMonth = 0;
+            long totalDays = ChronoUnit.DAYS.between(fDate, tDate);
+            count = isStart ? 0 : 1;
+            addMonth = isEnd ? 1 : 0;
+            for (var  i = count ; i < months + addMonth; i++){
+                arrMonth.add(fDate.getMonthValue() + i);
+            }
+            if(totalDays <= 60 && months == 1 || (months > 1 && !isFirstAndLastMonthFull(fDate, tDate))){
+                arrMonth.add((int)(tDate.getMonthValue() - 1L));
+            }
+            req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
+            if(arrMonth.size() > 0){
+                items = DataUtils.convertList(hdrRepo.groupByTopDTT0_2024(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+            }
+            //tinh khoang thua cua thang con lai
+            List<HangHoaDaTinhToanCache> itemExtra  = new ArrayList<>();
+            if(!isStart){
+                var giaoDichReq1 = new GiaoDichHangHoaReq();
+                BeanUtils.copyProperties(req, giaoDichReq1);
+                giaoDichReq1.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
+                YearMonth yearMonth = YearMonth.from(fDate);
+                LocalDate tDate1 = yearMonth.atEndOfMonth();
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.DOANH_THU));
+            }
+            if(!isEnd){
+                var giaoDichReq2 = new GiaoDichHangHoaReq();
+                BeanUtils.copyProperties(req, giaoDichReq2);
+                giaoDichReq2.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
+                LocalDate fDate1 = tDate.withDayOfMonth(1);
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.DOANH_THU));
+            }
+            if(!itemExtra.isEmpty()){
+                var groupItems = itemExtra.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+                for (Map.Entry<Long, List<HangHoaDaTinhToanCache>> entry : groupItems.entrySet()) {
+                    boolean found = false;
+                    for (HangHoaDaTinhToanCache hh : items) {
+                        if (hh.getThuocId().equals(entry.getKey())) {
+                            hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        items.add(entry.getValue().get(0));
+                    }
+                }
+                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                items = items.stream().limit(req.getPageSize()).toList();
+            }
 
-        var items = getDataRedis(req);
-        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
-                    .collect(Collectors.toList());
         }
-        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-                    .collect(Collectors.toList());
+        else if(months == 0 && isStart && isEnd || months == 11){
+            req.setType( months == 0 ? fDate.getMonthValue() : 0);
+            items = DataUtils.convertList(hdrRepo.searchListTop_DT_T0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
-        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-                    .collect(Collectors.toList());
+        else if(months == 0 && fDate.getMonthValue() != tDate.getMonthValue()){
+            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.DOANH_THU);
         }
-        items.addAll(dataArchive);
-
-        List<TopMatHangRes> data = items.stream()
-                .collect(Collectors.groupingBy(
-                        GiaoDichHangHoaCache::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) {
-                                        return null;
-                                    }
-                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                    BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
-
-                                    if(!duLieuCoSo.isParallel()){
-                                        doanhSoCoSo = duLieuCoSo.map(item-> item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    }
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomNganhHang(),
-                                            x.get(0).getTenDonVi(),
-                                            x.stream().map(item->item.getGiaBan().multiply(item.getSoLuong())).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                            doanhSoCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().stream()
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-        return  data;
+        else {
+            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.DOANH_THU);
+        }
+        //lấy ra doanh so cs
+        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+            req.setThuocIds(ids.toArray(new Long[ids.size()]));
+            var dataCS = DataUtils.convertList(hdrRepo.groupByTopDoanhThuCS(req), DoanhThuCS.class);
+            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            items.forEach(x->{
+                if(groupBy.containsKey(x.getThuocId())){
+                    var value = groupBy.get(x.getThuocId());
+                    x.setSoLieuCoSo(value.get(0).getBan());
+                }
+            });
+        }
+        return  items;
     }
 
     @Override
-    public List<TopMatHangRes> topSLBanChay(GiaoDichHangHoaReq req) throws Exception{
+    public List<HangHoaDaTinhToanCache> topSLBanChay(GiaoDichHangHoaReq req) throws Exception{
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
         setDefaultDates(req);
         req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.YEAR, -1);
-        List<GiaoDichHangHoaCache> dataArchive = new ArrayList<>();
-        //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
-        var toDate = req.getToDate();
-        if(req.getFromDate().before(dateArchive.getTime())){
-            req.setToDate(dateArchive.getTime());
-            var listArchive = hdrRepo.searchListCache(req);
-            if(!listArchive.stream().isParallel()){
-                dataArchive.addAll(DataUtils.convertList(listArchive, GiaoDichHangHoaCache.class));
+        List<HangHoaDaTinhToanCache> items = new ArrayList<>();
+        List<Tuple> tops= new ArrayList<>();
+        LocalDate fDate = req.getFromDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        LocalDate tDate = req.getToDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        var months = ChronoUnit.MONTHS.between(fDate, tDate);
+        LocalDate startfDate = fDate.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate endtDate = tDate.with(TemporalAdjusters.lastDayOfMonth());
+        var isStart = startfDate.getDayOfMonth() == fDate.getDayOfMonth();
+        var isEnd = endtDate.getDayOfMonth() == tDate.getDayOfMonth();
+        if(months >= 1 && months < 11 && isStart && isEnd){
+            var arrMonth = new ArrayList<Integer>();
+            for (var  i = 0 ; i < months + 1; i++){
+                arrMonth.add(fDate.getMonthValue() + i);
             }
-            req.setFromDate(dateArchive.getTime());
-            req.setToDate(toDate);
+            req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
+            items = DataUtils.convertList(hdrRepo.groupByTopSLT0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+        }
+        if(months >= 1 && months < 11 && (!isStart || !isEnd)){
+            var arrMonth = new ArrayList<Integer>();
+            var count = 0;
+            var addMonth = 0;
+            long totalDays = ChronoUnit.DAYS.between(fDate, tDate);
+            count = isStart ? 0 : 1;
+            addMonth = isEnd ? 1 : 0;
+            for (var  i = count ; i < months + addMonth; i++){
+                arrMonth.add(fDate.getMonthValue() + i);
+            }
+            if(totalDays <= 60 && months == 1 || (months > 1 && !isFirstAndLastMonthFull(fDate, tDate))){
+                arrMonth.add((int)(tDate.getMonthValue() - 1L));
+            }
+            req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
+            if(arrMonth.size() > 0){
+                items = DataUtils.convertList(hdrRepo.groupByTopSLT0_2024(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+            }
+
+            //tinh khoang thua cua thang con lai
+            List<HangHoaDaTinhToanCache> itemExtra  = new ArrayList<>();
+            if(!isStart){
+                var giaoDichReq1 = new GiaoDichHangHoaReq();
+                BeanUtils.copyProperties(req, giaoDichReq1);
+                giaoDichReq1.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
+                YearMonth yearMonth = YearMonth.from(fDate);
+                LocalDate tDate1 = yearMonth.atEndOfMonth();
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.SO_LUONG));
+            }
+            if(!isEnd){
+                var giaoDichReq2 = new GiaoDichHangHoaReq();
+                BeanUtils.copyProperties(req, giaoDichReq2);
+                giaoDichReq2.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
+                LocalDate fDate1 = tDate.withDayOfMonth(1);
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.SO_LUONG));
+            }
+            if(!itemExtra.isEmpty()){
+                var groupItems = itemExtra.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+                for (Map.Entry<Long, List<HangHoaDaTinhToanCache>> entry : groupItems.entrySet()) {
+                    boolean found = false;
+                    for (HangHoaDaTinhToanCache hh : items) {
+                        if (hh.getThuocId().equals(entry.getKey())) {
+                            hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        items.add(entry.getValue().get(0));
+                    }
+                }
+                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                items = items.stream().limit(req.getPageSize()).toList();
+            }
+
+        }
+        else if(months == 0 && isStart && isEnd || months == 11){
+            req.setType( months == 0 ? fDate.getMonthValue() : 0);
+            items = DataUtils.convertList(hdrRepo.searchListTop_SL_T0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+        }
+        else if(months == 0 && fDate.getMonthValue() != tDate.getMonthValue()){
+            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.SO_LUONG);
+        }
+        else {
+            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.SO_LUONG);
         }
 
-        var items = getDataRedis(req);
-        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
-                    .collect(Collectors.toList());
+        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+            req.setThuocIds(ids.toArray(new Long[ids.size()]));
+            var dataCS = DataUtils.convertList(hdrRepo.groupByTopSLCS(req), DoanhThuCS.class);
+            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            items.forEach(x->{
+                if(groupBy.containsKey(x.getThuocId())){
+                    var value = groupBy.get(x.getThuocId());
+                    x.setSoLieuCoSo(value.get(0).getSoLuong());
+                }
+            });
         }
-        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-                    .collect(Collectors.toList());
-        }
-        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-                    .collect(Collectors.toList());
-        }
-        items.addAll(dataArchive);
 
-        List<TopMatHangRes> data = items.stream()
-                .collect(Collectors.groupingBy(
-                        GiaoDichHangHoaCache::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) {
-                                        return null;
-                                    }
-                                    var duLieuCoSo =  x.stream().filter(item->item.getMaCoSo().equals(userInfo.getMaCoSo()));
-                                    BigDecimal doanhSoCoSo = BigDecimal.valueOf(0);
-
-                                    if(!duLieuCoSo.isParallel()){
-                                        doanhSoCoSo = duLieuCoSo.map(item-> item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    }
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomNganhHang(),
-                                            x.get(0).getTenDonVi(),
-                                            x.stream().map(item->item.getSoLuong()).reduce(BigDecimal.ZERO, BigDecimal::add),
-                                            doanhSoCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().stream()
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-        return  data;
+        return  items;
     }
 
     @Override
-    public List<TopMatHangRes> topTSLNCaoNhat(GiaoDichHangHoaReq req) throws Exception {
+    public List<HangHoaDaTinhToanCache> topTSLNCaoNhat(GiaoDichHangHoaReq req) throws Exception {
         Profile userInfo = this.getLoggedUser();
         if (userInfo == null)
             throw new Exception("Bad request.");
         setDefaultDates(req);
         req.setMaCoSo(userInfo.getMaCoSo());
         req.setPageSize(req.getPageSize() == null || req.getPageSize() < 1 ? LimitPageConstant.DEFAULT : req.getPageSize());
-        Calendar dateArchive = Calendar.getInstance();
-        dateArchive.add(Calendar.YEAR, -1);
-        List<GiaoDichHangHoaCache> dataArchive = new ArrayList<>();
-        //kiểm tra xem thời gian xem báo cáo có lớn hơn thời điểm archive không;
-        var toDate = req.getToDate();
-        if(req.getFromDate().before(dateArchive.getTime())){
-            req.setToDate(dateArchive.getTime());
-            var listArchive = hdrRepo.searchListCache(req);
-            if(!listArchive.stream().isParallel()){
-                dataArchive.addAll(DataUtils.convertList(listArchive, GiaoDichHangHoaCache.class));
+        List<HangHoaDaTinhToanCache> items = new ArrayList<>();
+        List<Tuple> tops= new ArrayList<>();
+        LocalDate fDate = req.getFromDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        LocalDate tDate = req.getToDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        var months = ChronoUnit.MONTHS.between(fDate, tDate);
+        LocalDate startfDate = fDate.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate endtDate = tDate.with(TemporalAdjusters.lastDayOfMonth());
+        var isStart = startfDate.getDayOfMonth() == fDate.getDayOfMonth();
+        var isEnd = endtDate.getDayOfMonth() == tDate.getDayOfMonth();
+        if(months >= 1 && months < 11 && isStart && isEnd){
+            var arrMonth = new ArrayList<Integer>();
+            for (var  i = 0 ; i < months + 1; i++){
+                arrMonth.add(fDate.getMonthValue() + i);
             }
-            req.setFromDate(dateArchive.getTime());
-            req.setToDate(toDate);
+            req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
+            items = DataUtils.convertList(hdrRepo.groupByTopTSLNT0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
+        if(months >= 1 && months < 11 && (!isStart || !isEnd)){
+            var arrMonth = new ArrayList<Integer>();
+            var count = 0;
+            var addMonth = 0;
+            long totalDays = ChronoUnit.DAYS.between(fDate, tDate);
+            count = isStart ? 0 : 1;
+            addMonth = isEnd ? 1 : 0;
+            for (var  i = count ; i < months + addMonth; i++){
+                arrMonth.add(fDate.getMonthValue() + i);
+            }
+            if(totalDays <= 60 && months == 1 || (months > 1 && !isFirstAndLastMonthFull(fDate, tDate))){
+                arrMonth.add((int)(tDate.getMonthValue() - 1L));
+            }
+            req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
+            if(arrMonth.size() > 0){
+                items = DataUtils.convertList(hdrRepo.groupByTopTSLNT0_2024(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+            }
 
-        var items = getDataRedis(req);
-        if(req.getNhomNganhHangId() != null && req.getNhomNganhHangId() > 0){
-            items = items.stream().filter(item->item.getNhomNganhHangId().equals(req.getNhomNganhHangId()))
-                    .collect(Collectors.toList());
+            //tinh khoang thua cua thang con lai
+            List<HangHoaDaTinhToanCache> itemExtra  = new ArrayList<>();
+            if(!isStart){
+                var giaoDichReq1 = new GiaoDichHangHoaReq();
+                BeanUtils.copyProperties(req, giaoDichReq1);
+                giaoDichReq1.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
+                YearMonth yearMonth = YearMonth.from(fDate);
+                LocalDate tDate1 = yearMonth.atEndOfMonth();
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.TSLN));
+            }
+            if(!isEnd){
+                var giaoDichReq2 = new GiaoDichHangHoaReq();
+                BeanUtils.copyProperties(req, giaoDichReq2);
+                giaoDichReq2.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
+                LocalDate fDate1 = tDate.withDayOfMonth(1);
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.TSLN));
+            }
+            if(!itemExtra.isEmpty()){
+                var groupItems = itemExtra.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+                for (Map.Entry<Long, List<HangHoaDaTinhToanCache>> entry : groupItems.entrySet()) {
+                    boolean found = false;
+                    for (HangHoaDaTinhToanCache hh : items) {
+                        if (hh.getThuocId().equals(entry.getKey())) {
+                            hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        items.add(entry.getValue().get(0));
+                    }
+                }
+                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                items = items.stream().limit(req.getPageSize()).toList();
+            }
+
         }
-        if(req.getNhomDuocLyId() != null && req.getNhomDuocLyId() > 0){
-            items = items.stream().filter(item->item.getNhomDuocLyId().equals(req.getNhomDuocLyId()))
-                    .collect(Collectors.toList());
+        else if(months == 0 && isStart && isEnd || months == 11){
+            req.setType( months == 0 ? fDate.getMonthValue() : 0);
+            items = DataUtils.convertList(hdrRepo.searchListTop_TSLN_T0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
-        if(req.getNhomHoatChatId() != null && req.getNhomHoatChatId() > 0){
-            items = items.stream().filter(item->item.getNhomHoatChatId().equals(req.getNhomHoatChatId()))
-                    .collect(Collectors.toList());
+        else if(months == 0 && fDate.getMonthValue() != tDate.getMonthValue()){
+            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.TSLN);
         }
-        items.addAll(dataArchive);
-        List<TopMatHangRes> data = items.parallelStream()
-                .collect(Collectors.groupingByConcurrent(
-                        GiaoDichHangHoaCache::getThuocId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                x -> {
-                                    if (x.isEmpty()) return null;
-
-                                    var duLieuCoSo = x.parallelStream()
-                                            .filter(item -> item.getMaCoSo().equals(userInfo.getMaCoSo()))
-                                            .collect(Collectors.toList());
-
-                                    BigDecimal tslnCoSo = BigDecimal.ZERO;
-                                    if (!duLieuCoSo.isEmpty()) {
-                                        BigDecimal tongGB = duLieuCoSo.parallelStream()
-                                                .filter(xx->xx.getGiaBan() != null && xx.getLoaiGiaoDich() == 2 && xx.getGiaBan().compareTo(BigDecimal.ZERO) > 0)
-                                                .map(GiaoDichHangHoaCache::getGiaBan)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        BigDecimal tongGN = duLieuCoSo.parallelStream()
-                                                .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoaCache::getGiaNhap)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                        if (tongGN.compareTo(BigDecimal.ZERO) > 0) {
-                                            tslnCoSo = (tongGB.subtract(tongGN))
-                                                    .divide(tongGN, 2, RoundingMode.HALF_UP)
-                                                    .multiply(BigDecimal.valueOf(100));
-                                        }
-                                    }
-
-                                    BigDecimal tongGNTT = x.parallelStream()
-                                            .filter(xx->xx.getGiaNhap() != null).map(GiaoDichHangHoaCache::getGiaNhap)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                    BigDecimal tongGBTT = x.parallelStream()
-                                            .filter(xx->xx.getGiaBan() != null).map(GiaoDichHangHoaCache::getGiaBan)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                                    BigDecimal tslnTT = BigDecimal.ZERO;
-                                    if (tongGNTT.compareTo(BigDecimal.ZERO) > 0) {
-                                        tslnTT = (tongGBTT.subtract(tongGNTT))
-                                                .divide(tongGNTT, 2, RoundingMode.HALF_UP)
-                                                .multiply(BigDecimal.valueOf(100));
-                                    }
-
-                                    return new TopMatHangRes(
-                                            x.get(0).getTenThuoc(),
-                                            x.get(0).getTenNhomNganhHang(),
-                                            x.get(0).getTenDonVi(),
-                                            tslnTT,
-                                            tslnCoSo
-                                    );
-                                }
-                        )
-                ))
-                .values().parallelStream()
-                .filter(Objects::nonNull)
-                .sorted((g1, g2) -> g2.getSoLieuThiTruong().compareTo(g1.getSoLieuThiTruong()))
-                .limit(req.getPageSize())
-                .collect(Collectors.toList());
-
-        return data;
+        else {
+            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.TSLN);
+        }
+        //lấy ra doanh so cs
+        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+            req.setThuocIds(ids.toArray(new Long[ids.size()]));
+            var dataCS = DataUtils.convertList(hdrRepo.groupByTopTSLNCS(req), DoanhThuCS.class);
+            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            items.forEach(x->{
+                if(groupBy.containsKey(x.getThuocId())){
+                    var value = groupBy.get(x.getThuocId());
+                    x.setSoLieuCoSo(value.get(0).getSoLuong());
+                }
+            });
+        }
+        return items;
     }
 
     private void setDefaultDates(GiaoDichHangHoaReq req) {
@@ -314,20 +443,15 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
 
     @Override
     public void pushData() throws Exception {
-        // Khởi tạo định dạng ngày tháng
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        // Lấy ngày hiện tại
         LocalDate today = LocalDate.now();
-
-        // Lấy ngày hôm nay của năm trước
         LocalDate oneYearAgo = today.minusYears(1);
 
-        // Tạo danh sách các ngày từ ngày hiện tại trở về ngày của năm trước
         LocalDate date = oneYearAgo;
         List<String> keys = new ArrayList<>();
+        List<GiaoDichHangHoaCache> allItems = new ArrayList<>();
         while (!date.isAfter(today)) {
-            // Chuyển LocalDate thành Date để in
             LocalDateTime startOfDayTime = date.atStartOfDay();
             LocalDateTime endOfDayTime = date.atTime(23, 59, 59);
 
@@ -337,19 +461,40 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             var req = new GiaoDichHangHoaReq();
             req.setFromDate(startOfDay);
             req.setToDate(endOfDay);
-            Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
-            String pattern = "dd/MM/yyyy";
+           Date todayWithZeroTime = formatter.parse(formatter.format(req.getToDate()));
+           String pattern = "dd/MM/yyyy";
             DateFormat df = new SimpleDateFormat(pattern);
             var items = DataUtils.convertList(hdrRepo.searchListCache(req), GiaoDichHangHoaCache.class);
-            if (items.stream().count() > 0) {
-                var key = "transaction-" + df.format(todayWithZeroTime);
-                redisListService.pushDataToRedisByTime(items, key);
+           if (items.stream().count() > 0) {
+               var groupBy = items.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+               groupBy.keySet().forEach(x->{
+                   var key = df.format(todayWithZeroTime);
+                   var values = groupBy.get(x);
+                   HangHoaDaTinhToanCache hh = new HangHoaDaTinhToanCache();
+                   hh.setThuocId(x);
+                   hh.setTenThuoc(values.get(0).getTenThuoc());
+                   hh.setTenNhomNganhHang(values.get(0).getTenNhomNganhHang());
+                   hh.setTenDonVi(values.get(0).getTenDonVi());
+                   hh.setNhomDuocLyId(values.get(0).getNhomDuocLyId());
+                   hh.setNhomNganhHangId(values.get(0).getNhomNganhHangId());
+                   hh.setNhomHoatChatId(values.get(0).getNhomHoatChatId());
+                   hh.setTongBan(values.stream().filter(xx->xx.getLoaiGiaoDich() == 2)
+                           .map(xx->xx.getGiaBan().multiply(xx.getSoLuong()))
+                           .reduce(BigDecimal.ZERO, BigDecimal::add));
+                   hh.setTongNhap(values.stream().filter(xx->xx.getLoaiGiaoDich() == 1)
+                           .map(xx->xx.getGiaNhap().multiply(xx.getSoLuong()))
+                           .reduce(BigDecimal.ZERO, BigDecimal::add));
+                   hh.setSoLuong(values.stream().filter(xx->xx.getLoaiGiaoDich() == 2)
+                           .map(xx->xx.getSoLuong())
+                           .reduce(BigDecimal.ZERO, BigDecimal::add));
+                   redisListService.pushDataToRedisByTime(hh, key);
+               });
             }
             date = date.plusDays(1);
         }
-
     }
 
+    @Override
     public void pushDataThreeLastMonth() throws Exception {
         var req = new GiaoDichHangHoaReq();
         Calendar fdate = Calendar.getInstance();
@@ -358,31 +503,341 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         req.setFromDate(fdate.getTime());
         req.setDongBang(false);
         var list = DataUtils.convertList(hdrRepo.groupByTopDoanhSoLuongPushRedis(req, 2000), TopMatHangRes.class);
-        redisListService.pushDataToRedis(list, "top-sl", "3-thang-gan-nhat");
+        redisListService.pushDataToRedis3T(list, "top-sl", "3-thang-gan-nhat");
     }
 
-    private List<GiaoDichHangHoaCache> getDataRedis(GiaoDichHangHoaReq req) throws Exception {
+    @Override
+
+    public void pushDataByMonth() throws Exception {
+            var items = DataUtils.convertList(hdrRepoT8.searchList(new GiaoDichHangHoaReq()),
+                    GiaoDichHangHoa_T8_2024.class);
+            if (items.stream().count() > 0) {
+                var groupBy = items.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+                groupBy.keySet().forEach(x->{
+                    var key = "T8";
+                    var values = groupBy.get(x);
+                    HangHoaDaTinhToanCache hh = new HangHoaDaTinhToanCache();
+                    hh.setThuocId(x);
+                    hh.setTenThuoc(values.get(0).getTenThuoc());
+                    hh.setTenNhomNganhHang(values.get(0).getTenNhomNganhHang());
+                    hh.setTenDonVi(values.get(0).getTenDonVi());
+                    hh.setNhomDuocLyId(values.get(0).getNhomDuocLyId());
+                    hh.setNhomNganhHangId(values.get(0).getNhomNganhHangId());
+                    hh.setNhomHoatChatId(values.get(0).getNhomHoatChatId());
+                    hh.setTongBan(values.stream()
+                            .map(xx->xx.getTongBan())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add));
+                    hh.setTongNhap(values.stream()
+                            .map(xx->xx.getTongNhap())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add));
+                    hh.setSoLuong(values.stream()
+                            .map(xx->xx.getTongSoLuong())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add));
+                    redisListService.pushDataToRedisByTime(hh, key);
+                });
+            }
+        }
+
+    private List<HangHoaDaTinhToanCache> getDataRedis(GiaoDichHangHoaReq req, int type) throws Exception {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         LocalDate toDate = convertToLocalDate(req.getToDate());
-
         LocalDate fromDate = convertToLocalDate(req.getFromDate());
         List<String> keys = new ArrayList<>();
-        List<GiaoDichHangHoaCache> dataLst = new ArrayList<GiaoDichHangHoaCache>();
+
         while (!fromDate.isAfter(toDate)) {
             String pattern = "dd/MM/yyyy";
             var datekey =  Date.from(fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date todayWithZeroTime = formatter.parse(formatter.format(datekey));
             DateFormat df = new SimpleDateFormat(pattern);
-            var data = redisListService.getAllDataKey("transaction-" + df.format(todayWithZeroTime));
-            dataLst.addAll(data);
+            keys.add(df.format(todayWithZeroTime));
             fromDate = fromDate.plusDays(1);
         }
-       return dataLst;
+
+        return redisListService.getAllDataDetailByKeys(keys, type);
     }
 
-    // Hàm chuyển đổi Date sang LocalDate
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private List<HangHoaDaTinhToanCache> chuaQua1Thang(GiaoDichHangHoaReq req, LocalDate fDate, LocalDate tDate , int type){
+        List<HangHoaDaTinhToanCache> items = new ArrayList<>();
+        switch (type){
+            case BaoCaoContains.DOANH_THU -> {
+                if(fDate.getMonthValue() == 8 && tDate.getMonthValue() == 8){
+                    items = DataUtils.convertList(hdrRepoT8.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 7 && tDate.getMonthValue() == 7){
+                    req.setType(7);
+                    items = DataUtils.convertList(hdrRepoT7.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 6 && tDate.getMonthValue() == 6){
+                    items = DataUtils.convertList(hdrRepoT6.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 5 && tDate.getMonthValue() == 5){
+                    items = DataUtils.convertList(hdrRepoT5.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 4 && tDate.getMonthValue() == 4){
+                    items = DataUtils.convertList(hdrRepoT4.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 3 && tDate.getMonthValue() == 3){
+                    items = DataUtils.convertList(hdrRepoT3.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 2 && tDate.getMonthValue() == 2){
+                    items = DataUtils.convertList(hdrRepoT2.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 1 && tDate.getMonthValue() == 1){
+                    items = DataUtils.convertList(hdrRepoT1.groupByTopDT(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                break;
+            }
+            case BaoCaoContains.SO_LUONG -> {
+                if(fDate.getMonthValue() == 8 && tDate.getMonthValue() == 8){
+                    items = DataUtils.convertList(hdrRepoT8.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 7 && tDate.getMonthValue() == 7){
+                    req.setType(7);
+                    items = DataUtils.convertList(hdrRepoT7.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 6 && tDate.getMonthValue() == 6){
+                    items = DataUtils.convertList(hdrRepoT6.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 5 && tDate.getMonthValue() == 5){
+                    items = DataUtils.convertList(hdrRepoT5.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 4 && tDate.getMonthValue() == 4){
+                    items = DataUtils.convertList(hdrRepoT4.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 3 && tDate.getMonthValue() == 3){
+                    items = DataUtils.convertList(hdrRepoT3.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 2 && tDate.getMonthValue() == 2){
+                    items = DataUtils.convertList(hdrRepoT2.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 1 && tDate.getMonthValue() == 1){
+                    items = DataUtils.convertList(hdrRepoT1.groupByTopSL(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                break;
+            }
+            case BaoCaoContains.TSLN -> {
+                if(fDate.getMonthValue() == 8 && tDate.getMonthValue() == 8){
+                    items = DataUtils.convertList(hdrRepoT8.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 7 && tDate.getMonthValue() == 7){
+                    req.setType(7);
+                    items = DataUtils.convertList(hdrRepoT7.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 6 && tDate.getMonthValue() == 6){
+                    items = DataUtils.convertList(hdrRepoT6.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 5 && tDate.getMonthValue() == 5){
+                    items = DataUtils.convertList(hdrRepoT5.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 4 && tDate.getMonthValue() == 4){
+                    items = DataUtils.convertList(hdrRepoT4.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 3 && tDate.getMonthValue() == 3){
+                    items = DataUtils.convertList(hdrRepoT3.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 2 && tDate.getMonthValue() == 2){
+                    items = DataUtils.convertList(hdrRepoT2.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 1 && tDate.getMonthValue() == 1){
+                    items = DataUtils.convertList(hdrRepoT1.groupByTopTSLN(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
+                }
+                break;
+            }
+        }
+
+        return items;
+    }
+
+    private List<HangHoaDaTinhToanCache> chuaQua1ThangO2ThangKhacNhau(GiaoDichHangHoaReq req, LocalDate fDate, LocalDate tDate, int type) throws Exception {
+        List<HangHoaDaTinhToanCache> items = new ArrayList<>();
+        List<HangHoaDaTinhToanCache> itemLast = new ArrayList<>();
+        switch (type){
+            case BaoCaoContains.DOANH_THU -> {
+                if(fDate.getMonthValue() == 8){
+                    items = DataUtils.convertList(hdrRepoT8.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 7){
+                    items = DataUtils.convertList(hdrRepoT7.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 6){
+                    items = DataUtils.convertList(hdrRepoT6.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 5){
+                    items = DataUtils.convertList(hdrRepoT5.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 4){
+                    items = DataUtils.convertList(hdrRepoT4.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 3){
+                    items = DataUtils.convertList(hdrRepoT3.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 2){
+                    items = DataUtils.convertList(hdrRepoT2.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else{
+                    items = DataUtils.convertList(hdrRepoT1.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+
+                if(tDate.getMonthValue() == 8){
+                    itemLast = DataUtils.convertList(hdrRepoT8.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 7){
+                    itemLast = DataUtils.convertList(hdrRepoT7.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 6){
+                    itemLast = DataUtils.convertList(hdrRepoT6.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 5){
+                    itemLast = DataUtils.convertList(hdrRepoT5.groupByTopDT(req,req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 4){
+                    itemLast = DataUtils.convertList(hdrRepoT4.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 3){
+                    itemLast = DataUtils.convertList(hdrRepoT3.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 2){
+                    itemLast = DataUtils.convertList(hdrRepoT2.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else{
+                    itemLast = DataUtils.convertList(hdrRepoT1.groupByTopDT(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+            }
+            case BaoCaoContains.SO_LUONG -> {
+                if(fDate.getMonthValue() == 8){
+                    items = DataUtils.convertList(hdrRepoT8.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 7){
+                    items = DataUtils.convertList(hdrRepoT7.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 6){
+                    items = DataUtils.convertList(hdrRepoT6.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 5){
+                    items = DataUtils.convertList(hdrRepoT5.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 4){
+                    items = DataUtils.convertList(hdrRepoT4.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 3){
+                    items = DataUtils.convertList(hdrRepoT3.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 2){
+                    items = DataUtils.convertList(hdrRepoT2.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else{
+                    items = DataUtils.convertList(hdrRepoT1.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+
+                if(tDate.getMonthValue() == 8){
+                    itemLast = DataUtils.convertList(hdrRepoT8.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 7){
+                    itemLast = DataUtils.convertList(hdrRepoT7.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 6){
+                    itemLast = DataUtils.convertList(hdrRepoT6.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 5){
+                    itemLast = DataUtils.convertList(hdrRepoT5.groupByTopSL(req,req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 4){
+                    itemLast = DataUtils.convertList(hdrRepoT4.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 3){
+                    itemLast = DataUtils.convertList(hdrRepoT3.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 2){
+                    itemLast = DataUtils.convertList(hdrRepoT2.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else{
+                    itemLast = DataUtils.convertList(hdrRepoT1.groupByTopSL(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                break;
+            }
+            case BaoCaoContains.TSLN -> {
+                if(fDate.getMonthValue() == 8){
+                    items = DataUtils.convertList(hdrRepoT8.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 7){
+                    items = DataUtils.convertList(hdrRepoT7.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 6){
+                    items = DataUtils.convertList(hdrRepoT6.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 5){
+                    items = DataUtils.convertList(hdrRepoT5.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 4){
+                    items = DataUtils.convertList(hdrRepoT4.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 3){
+                    items = DataUtils.convertList(hdrRepoT3.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(fDate.getMonthValue() == 2){
+                    items = DataUtils.convertList(hdrRepoT2.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else{
+                    items = DataUtils.convertList(hdrRepoT1.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+
+                if(tDate.getMonthValue() == 8){
+                    itemLast = DataUtils.convertList(hdrRepoT8.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 7){
+                    itemLast = DataUtils.convertList(hdrRepoT7.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 6){
+                    itemLast = DataUtils.convertList(hdrRepoT6.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 5){
+                    itemLast = DataUtils.convertList(hdrRepoT5.groupByTopTSLN(req,req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 4){
+                    itemLast = DataUtils.convertList(hdrRepoT4.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 3){
+                    itemLast = DataUtils.convertList(hdrRepoT3.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else if(tDate.getMonthValue() == 2){
+                    itemLast = DataUtils.convertList(hdrRepoT2.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                else{
+                    itemLast = DataUtils.convertList(hdrRepoT1.groupByTopTSLN(req, req.getPageSize() + BaoCaoContains.MAX), HangHoaDaTinhToanCache.class);
+                }
+                break;
+            }
+        }
+        var groupItems = itemLast.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+        for (Map.Entry<Long, List<HangHoaDaTinhToanCache>> entry : groupItems.entrySet()) {
+            boolean found = false;
+            for (HangHoaDaTinhToanCache hh : items) {
+                if (hh.getThuocId().equals(entry.getKey())) {
+                    hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                items.add(entry.getValue().get(0));
+            }
+        }
+        items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+
+        return items.stream().limit(req.getPageSize()).toList();
+    }
+
+    public static boolean isFirstAndLastMonthFull(LocalDate startDate, LocalDate endDate) {
+        LocalDate endOfFirstMonth = YearMonth.from(startDate).atEndOfMonth();
+        long daysInFirstMonth = ChronoUnit.DAYS.between(startDate, endOfFirstMonth.plusDays(1));
+        LocalDate startOfLastMonth = YearMonth.from(endDate).atDay(1);
+        long daysInLastMonth = ChronoUnit.DAYS.between(startOfLastMonth, endDate.plusDays(1));
+        long totalDays = daysInFirstMonth + daysInLastMonth;
+        return totalDays > 31;
     }
 }

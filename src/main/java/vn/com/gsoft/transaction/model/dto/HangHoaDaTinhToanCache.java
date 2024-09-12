@@ -1,5 +1,7 @@
 package vn.com.gsoft.transaction.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Transient;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -7,20 +9,22 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
-public class GiaoDichHangHoaCache implements Serializable {
+public class HangHoaDaTinhToanCache implements Serializable {
     private String tenNhomNganhHang;
-    private Long id ;
     private Long thuocId;
     private String tenThuoc;
+    @Transient
     private Integer nhomDuocLyId;
+    @Transient
     private Integer nhomHoatChatId;
     private BigDecimal soLuong;
-    private BigDecimal giaNhap;
-    private BigDecimal giaBan;
+    private BigDecimal tongNhap;
+    private BigDecimal tongBan;
     private String tenDonVi;
-    private Date ngayGiaoDich;
-    private Integer LoaiGiaoDich;
-    private String maCoSo;
-    private Integer maPhieuChiTiet;
+    @Transient
     private Integer nhomNganhHangId;
+    @Transient
+    private BigDecimal soLieuThiTruong;
+    @Transient
+    private BigDecimal soLieuCoSo;
 }

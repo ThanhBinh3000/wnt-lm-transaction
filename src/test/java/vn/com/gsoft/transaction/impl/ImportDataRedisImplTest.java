@@ -20,8 +20,8 @@ class ImportDataRedisImplTest {
 //    static void beforeAll() {
 //
 //    }
-//    @Test
-//    void pushData() throws Exception {
-//        giaoDichHangHoaService.pushDataThreeLastMonth();
-//    }
+   // @Test
+    void pushData() throws Exception {
+        //giaoDichHangHoaService.pushDataByMonth();
+    }
 }

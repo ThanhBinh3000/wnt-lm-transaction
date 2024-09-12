@@ -1,21 +1,20 @@
 package vn.com.gsoft.transaction.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
-import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaCache;
-import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
-import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaRes;
-import vn.com.gsoft.transaction.model.dto.TopMatHangRes;
+import vn.com.gsoft.transaction.model.dto.*;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface RedisListService {
 
     List<Object> getGiaoDichHangHoaValues(GiaoDichHangHoaReq rep);
     void pushDataRedis(List<GiaoDichHangHoa> giaoDichHangHoas);
-    void pushDataToRedisByTime(List<GiaoDichHangHoaCache> dataList, String key);
+    void pushDataToRedisByTime(HangHoaDaTinhToanCache data, String key);
     List<GiaoDichHangHoaCache> getAllDataKey(String key);
-    List<GiaoDichHangHoaCache> getAllDataDetailByKeys(List<String> keys) throws Exception;
-    void pushDataToRedis(List<TopMatHangRes> dataList, String time, String type);
+    List<HangHoaDaTinhToanCache> getAllDataDetailByKeys(List<String> keys, Integer type) throws Exception;
+    void pushDataToRedis3T(List<TopMatHangRes> dataList, String time, String type);
 }
