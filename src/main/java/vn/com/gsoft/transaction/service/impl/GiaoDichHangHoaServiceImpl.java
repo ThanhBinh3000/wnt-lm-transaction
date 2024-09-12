@@ -170,7 +170,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         items.add(entry.getValue().get(0));
                     }
                 }
-                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                if(items != null){
+                    items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                }
                 items = items.stream().limit(req.getPageSize()).toList();
             }
 
@@ -280,7 +282,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         items.add(entry.getValue().get(0));
                     }
                 }
-                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                if(items != null){
+                    items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                }
                 items = items.stream().limit(req.getPageSize()).toList();
             }
 
@@ -391,7 +395,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         items.add(entry.getValue().get(0));
                     }
                 }
-                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                if(items != null){
+                    items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+                }
                 items = items.stream().limit(req.getPageSize()).toList();
             }
 
@@ -827,8 +833,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 items.add(entry.getValue().get(0));
             }
         }
-        items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
-
+        if(items != null){
+            items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+        }
         return items.stream().limit(req.getPageSize()).toList();
     }
 
