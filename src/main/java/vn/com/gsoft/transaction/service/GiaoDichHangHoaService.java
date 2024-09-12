@@ -13,4 +13,5 @@ public interface GiaoDichHangHoaService extends BaseService<GiaoDichHangHoa, Gia
     List<HangHoaDaTinhToanCache> topSLBanChay(GiaoDichHangHoaReq req) throws Exception;
     void pushData() throws Exception;
     void pushDataThreeLastMonth() throws Exception;
+    void pushDataByMonth() throws Exception;
 }

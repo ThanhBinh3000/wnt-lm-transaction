@@ -16,4 +16,5 @@ public interface RedisListService {
     void pushDataToRedisByTime(HangHoaDaTinhToanCache data, String key);
     List<GiaoDichHangHoaCache> getAllDataKey(String key);
     List<HangHoaDaTinhToanCache> getAllDataDetailByKeys(List<String> keys, Integer type) throws Exception;
+    void pushDataToRedis3T(List<TopMatHangRes> dataList, String time, String type);
 }

@@ -47,8 +47,15 @@ public class RedisListServiceImpl implements RedisListService {
         });
     }
 
+    public void pushDataToRedis3T(List<TopMatHangRes> dataList, String time, String type) {
+        for (int i = 0; i < dataList.size(); i++) {
+            String key = time + "-" + type + ":" + i;
+            redisTemplate.opsForValue().set(key, dataList.get(i));
+        }
+    }
+
     public void pushDataToRedisByTime(HangHoaDaTinhToanCache data, String key) {
-        redisTemplate.opsForHash().put("transaction-" + key, data.getThuocId(),
+        redisTemplate.opsForHash().put("transaction-12-month:transaction-" + key, data.getThuocId(),
                 data);
     }
 
@@ -91,17 +98,6 @@ public class RedisListServiceImpl implements RedisListService {
                                 itemFromMapData2.setSoLieuThiTruong(itemFromMapData2.getTongBan().add(itemFromMapData1.getTongBan()));
                             }
                             if(type == BaoCaoContains.TSLN){
-                                itemFromMapData2.setTongNhap(itemFromMapData2.getTongNhap()
-                                        .subtract(itemFromMapData1.getTongNhap()));
-                                itemFromMapData2.setTongBan(itemFromMapData2.getTongBan().add(itemFromMapData1.getTongBan()));
-                                if(i == keys.size()-1 && itemFromMapData2.getTongNhap() != null
-                                        && itemFromMapData2.getTongNhap().compareTo(BigDecimal.ZERO) > 0){
-                                    itemFromMapData2.setSoLieuThiTruong
-                                            (((itemFromMapData2.getTongBan()
-                                                    .subtract(itemFromMapData2.getTongNhap()))
-                                                    .divide(itemFromMapData2.getTongNhap()))
-                                                    .multiply(BigDecimal.valueOf(100)));
-                                }
                             }
                         } else {
                             if(type == BaoCaoContains.SO_LUONG){
@@ -110,13 +106,8 @@ public class RedisListServiceImpl implements RedisListService {
                             if(type == BaoCaoContains.DOANH_THU){
                                 itemFromMapData1.setSoLieuThiTruong(itemFromMapData1.getTongBan());
                             }
-                            if(type == BaoCaoContains.TSLN && i == keys.size()-1 && itemFromMapData1.getTongNhap() != null
-                                    && itemFromMapData1.getTongNhap().compareTo(BigDecimal.ZERO) > 0){
-                                itemFromMapData1.setSoLieuThiTruong
-                                        (((itemFromMapData1.getTongBan()
-                                                .subtract(itemFromMapData1.getTongNhap()))
-                                                .divide(itemFromMapData1.getTongNhap()))
-                                                .multiply(BigDecimal.valueOf(100)));
+                            if(type == BaoCaoContains.TSLN){
+                                itemFromMapData1.setSoLieuThiTruong(BigDecimal.ZERO);
                             }
                             dataKeyFirst.put(key, itemFromMapData1);
                         }
