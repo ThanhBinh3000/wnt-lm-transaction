@@ -70,6 +70,7 @@ public interface GiaoDichHH_T8_2024Repository extends CrudRepository<GiaoDichHan
             " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
             " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
             " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " AND c.tongNhap > 0"+
             " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
             " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc"
             , nativeQuery = true

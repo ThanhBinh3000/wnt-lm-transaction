@@ -213,7 +213,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> groupByTopSLCS(@Param("param") GiaoDichHangHoaReq param);
     @Query(value = "SELECT c.ThuocId as 'thuocId'" +
-            ", (CASE WHEN SUM(c.soLuong * GiaNhap) > 0 THEN ((SUM(c.soLuong * GiaBan) - SUM(c.soLuong * GiaNhap)) / SUM(c.soLuong * GiaNhap)) * 100 ELSE NULL END) as 'soLuong' " +
+            ", (CASE WHEN SUM(c.soLuong * GiaNhap) > 0 THEN ((SUM(c.soLuong * GiaBan) - SUM(c.soLuong * GiaNhap)) / SUM(c.soLuong * GiaNhap)) * 100 ELSE 0.0 END) as 'soLuong' " +
             ", 0.0 as 'nhap', 0.0 as 'ban'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
@@ -362,8 +362,9 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
             " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
             " AND (c.type in (:#{#param.types})) " +
+            " AND c.tongNhap > 0"+
             " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc"
+           " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc"
             , nativeQuery = true
     )
     List<Tuple> groupByTopTSLNT0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
@@ -414,6 +415,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
                     " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
                     " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
                     " AND (:#{#param.type} IS NULL OR c.type = :#{#param.type}) " +
+                    " AND c.tongNhap > 0"+
                     " ORDER BY soLieuThiTruong desc"
             , nativeQuery = true
     )

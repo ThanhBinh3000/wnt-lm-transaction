@@ -121,7 +121,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
             items = DataUtils.convertList(hdrRepo.groupByTopDTT0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
-        if(months >= 1 && months < 11 && (!isStart || !isEnd)){
+        else if(months >= 1 && months < 11 && (!isStart || !isEnd)){
             var arrMonth = new ArrayList<Integer>();
             var count = 0;
             var addMonth = 0;
@@ -193,12 +193,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setThuocIds(ids.toArray(new Long[ids.size()]));
             var dataCS = DataUtils.convertList(hdrRepo.groupByTopDoanhThuCS(req), DoanhThuCS.class);
             var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
-            items.forEach(x->{
-                if(groupBy.containsKey(x.getThuocId())){
-                    var value = groupBy.get(x.getThuocId());
-                    x.setSoLieuCoSo(value.get(0).getBan());
-                }
-            });
+            if(groupBy.size() > 0){
+                items.forEach(x->{
+                    if(groupBy.containsKey(x.getThuocId())){
+                        var value = groupBy.get(x.getThuocId());
+                        x.setSoLieuCoSo(value.get(0).getBan());
+                    }
+                });
+            }
         }
         return  items;
     }
@@ -232,7 +234,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
             items = DataUtils.convertList(hdrRepo.groupByTopSLT0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
-        if(months >= 1 && months < 11 && (!isStart || !isEnd)){
+        else if(months >= 1 && months < 11 && (!isStart || !isEnd)){
             var arrMonth = new ArrayList<Integer>();
             var count = 0;
             var addMonth = 0;
@@ -345,7 +347,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
             items = DataUtils.convertList(hdrRepo.groupByTopTSLNT0_2024(req, req.getPageSize()), HangHoaDaTinhToanCache.class);
         }
-        if(months >= 1 && months < 11 && (!isStart || !isEnd)){
+        else if(months >= 1 && months < 11 && (!isStart || !isEnd)){
             var arrMonth = new ArrayList<Integer>();
             var count = 0;
             var addMonth = 0;
