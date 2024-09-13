@@ -88,7 +88,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 arrMonth.add(fDate.getMonthValue() + i);
             }
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
-            items = DataUtils.convertList(hdrRepo.groupByTopDT_T0(groupByTopDT_T0(endtDate.getYear(), req)),
+            items = DataUtils.convertList(hdrRepo.groupByTopDT_T0(groupByTopDT_T0(endtDate.getYear()
+                            , req, req.getPageSize())),
                     HangHoaDaTinhToanCache.class);
         }
         else if(months >= 1 && months < 11 && (!isStart || !isEnd)){
@@ -101,12 +102,13 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             for (var  i = count ; i < months + addMonth; i++){
                 arrMonth.add(fDate.getMonthValue() + i);
             }
-            if(totalDays <= 60 && months == 1 || (months > 1 && !isFirstAndLastMonthFull(fDate, tDate))){
+            if(months >= 1 && !isFirstAndLastMonthFull(fDate, tDate)){
                 arrMonth.add((int)(tDate.getMonthValue() - 1L));
             }
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
             if(arrMonth.size() > 0){
-                items = DataUtils.convertList(hdrRepo.groupByTopDT_T0(groupByTopDT_T0(endtDate.getYear(), req)),
+                items = DataUtils.convertList(hdrRepo.groupByTopDT_T0(
+                        groupByTopDT_T0(endtDate.getYear(), req, req.getPageSize() + 100)),
                         HangHoaDaTinhToanCache.class);
             }
             //tinh khoang thua cua thang con lai
@@ -117,14 +119,16 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 giaoDichReq1.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 YearMonth yearMonth = YearMonth.from(fDate);
                 LocalDate tDate1 = yearMonth.atEndOfMonth();
-                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.DOANH_THU));
+                itemExtra.addAll(chuaQua1Thang(
+                        giaoDichReq1, fDate, tDate1, BaoCaoContains.DOANH_THU, giaoDichReq1.getPageSize()));
             }
             if(!isEnd){
                 var giaoDichReq2 = new GiaoDichHangHoaReq();
                 BeanUtils.copyProperties(req, giaoDichReq2);
                 giaoDichReq2.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 LocalDate fDate1 = tDate.withDayOfMonth(1);
-                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.DOANH_THU));
+                itemExtra.addAll(chuaQua1Thang(
+                        giaoDichReq2, fDate1, tDate, BaoCaoContains.DOANH_THU, giaoDichReq2.getPageSize()));
             }
             if(!itemExtra.isEmpty()){
                 var groupItems = itemExtra.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
@@ -141,23 +145,25 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         items.add(entry.getValue().get(0));
                     }
                 }
-                if(items != null){
-                    items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
-                }
-                items = items.stream().limit(req.getPageSize()).toList();
             }
+            if(items != null){
+                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+            }
+            items = items.stream().limit(req.getPageSize()).toList();
 
         }
         else if(months == 0 && isStart && isEnd || months == 11){
             req.setType( months == 0 ? fDate.getMonthValue() : 0);
-            items = DataUtils.convertList(hdrRepo.searchListTop_DT_T0(searchTopDT_T0(endtDate.getYear(), req)),
+            items = DataUtils.convertList(hdrRepo.searchListTop_DT_T0(
+                    searchTopDT_T0(endtDate.getYear(), req, req.getPageSize())),
                     HangHoaDaTinhToanCache.class);
         }
         else if(months == 0 && fDate.getMonthValue() != tDate.getMonthValue()){
-            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.DOANH_THU);
+            items = chuaQua1ThangO2ThangKhacNhau(
+                    req, fDate, tDate, BaoCaoContains.DOANH_THU, req.getPageSize());
         }
         else {
-            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.DOANH_THU);
+            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.DOANH_THU, req.getPageSize());
         }
         //lấy ra doanh so cs
         if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
@@ -204,7 +210,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 arrMonth.add(fDate.getMonthValue() + i);
             }
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
-            items = DataUtils.convertList(hdrRepo.groupByTopSL_T0(groupByTopSL_T0(endtDate.getYear(), req)),
+            items = DataUtils.convertList(hdrRepo.groupByTopSL_T0(
+                    groupByTopSL_T0(endtDate.getYear(), req, req.getPageSize())),
                     HangHoaDaTinhToanCache.class);
         }
         else if(months >= 1 && months < 11 && (!isStart || !isEnd)){
@@ -217,12 +224,13 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             for (var  i = count ; i < months + addMonth; i++){
                 arrMonth.add(fDate.getMonthValue() + i);
             }
-            if(totalDays <= 60 && months == 1 || (months > 1 && !isFirstAndLastMonthFull(fDate, tDate))){
+            if(months >= 1 && !isFirstAndLastMonthFull(fDate, tDate)){
                 arrMonth.add((int)(tDate.getMonthValue() - 1L));
             }
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
             if(arrMonth.size() > 0){
-                items = DataUtils.convertList(hdrRepo.groupByTopSL_T0(groupByTopSL_T0(endtDate.getYear(), req)),
+                items = DataUtils.convertList(hdrRepo.groupByTopSL_T0(
+                        groupByTopSL_T0(endtDate.getYear(), req, req.getPageSize() + 100)),
                         HangHoaDaTinhToanCache.class);
             }
 
@@ -234,14 +242,16 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 giaoDichReq1.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 YearMonth yearMonth = YearMonth.from(fDate);
                 LocalDate tDate1 = yearMonth.atEndOfMonth();
-                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.SO_LUONG));
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.SO_LUONG,
+                        giaoDichReq1.getPageSize()));
             }
             if(!isEnd){
                 var giaoDichReq2 = new GiaoDichHangHoaReq();
                 BeanUtils.copyProperties(req, giaoDichReq2);
                 giaoDichReq2.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 LocalDate fDate1 = tDate.withDayOfMonth(1);
-                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.SO_LUONG));
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.SO_LUONG,
+                        giaoDichReq2.getPageSize()));
             }
             if(!itemExtra.isEmpty()){
                 var groupItems = itemExtra.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
@@ -258,11 +268,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         items.add(entry.getValue().get(0));
                     }
                 }
-                if(items != null){
-                    items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
-                }
-                items = items.stream().limit(req.getPageSize()).toList();
             }
+            if(items != null){
+                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+            }
+            items = items.stream().limit(req.getPageSize()).toList();
 
         }
         else if(months == 0 && isStart && isEnd || months == 11){
@@ -271,10 +281,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     HangHoaDaTinhToanCache.class);
         }
         else if(months == 0 && fDate.getMonthValue() != tDate.getMonthValue()){
-            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.SO_LUONG);
+            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.SO_LUONG, req.getPageSize());
         }
         else {
-            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.SO_LUONG);
+            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.SO_LUONG, req.getPageSize());
         }
 
         if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
@@ -320,7 +330,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 arrMonth.add(fDate.getMonthValue() + i);
             }
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
-            items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(groupByTopTSLN_T0(endtDate.getYear(), req)),
+            items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(
+                    groupByTopTSLN_T0(endtDate.getYear(), req, req.getPageSize())),
                     HangHoaDaTinhToanCache.class);
         }
         else if(months >= 1 && months < 11 && (!isStart || !isEnd)){
@@ -333,12 +344,13 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             for (var  i = count ; i < months + addMonth; i++){
                 arrMonth.add(fDate.getMonthValue() + i);
             }
-            if(totalDays <= 60 && months == 1 || (months > 1 && !isFirstAndLastMonthFull(fDate, tDate))){
+            if(months >= 1 && !isFirstAndLastMonthFull(fDate, tDate)){
                 arrMonth.add((int)(tDate.getMonthValue() - 1L));
             }
             req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
             if(arrMonth.size() > 0){
-                items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(groupByTopTSLN_T0(endtDate.getYear(), req)),
+                items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(
+                        groupByTopTSLN_T0(endtDate.getYear(), req, req.getPageSize() + 100)),
                         HangHoaDaTinhToanCache.class);
             }
 
@@ -350,14 +362,16 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 giaoDichReq1.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 YearMonth yearMonth = YearMonth.from(fDate);
                 LocalDate tDate1 = yearMonth.atEndOfMonth();
-                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.TSLN));
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq1, fDate, tDate1, BaoCaoContains.TSLN,
+                        giaoDichReq1.getPageSize()));
             }
             if(!isEnd){
                 var giaoDichReq2 = new GiaoDichHangHoaReq();
                 BeanUtils.copyProperties(req, giaoDichReq2);
                 giaoDichReq2.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 LocalDate fDate1 = tDate.withDayOfMonth(1);
-                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.TSLN));
+                itemExtra.addAll(chuaQua1Thang(giaoDichReq2, fDate1, tDate, BaoCaoContains.TSLN,
+                        giaoDichReq2.getPageSize()));
             }
             if(!itemExtra.isEmpty()){
                 var groupItems = itemExtra.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
@@ -374,11 +388,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         items.add(entry.getValue().get(0));
                     }
                 }
-                if(items != null){
-                    items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
-                }
-                items = items.stream().limit(req.getPageSize()).toList();
             }
+            if(items != null){
+                items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
+            }
+            items = items.stream().limit(req.getPageSize()).toList();
 
         }
         else if(months == 0 && isStart && isEnd || months == 11){
@@ -387,10 +401,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     HangHoaDaTinhToanCache.class);
         }
         else if(months == 0 && fDate.getMonthValue() != tDate.getMonthValue()){
-            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.TSLN);
+            items = chuaQua1ThangO2ThangKhacNhau(req, fDate, tDate, BaoCaoContains.TSLN, req.getPageSize());
         }
         else {
-            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.TSLN);
+            items = chuaQua1Thang(req, fDate, tDate, BaoCaoContains.TSLN, req.getPageSize());
         }
         //lấy ra doanh so cs
         if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
@@ -521,24 +535,25 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    private List<HangHoaDaTinhToanCache> chuaQua1Thang(GiaoDichHangHoaReq req, LocalDate fDate, LocalDate tDate , int type){
+    private List<HangHoaDaTinhToanCache> chuaQua1Thang(GiaoDichHangHoaReq req, LocalDate fDate,
+                                                       LocalDate tDate , int type, int top){
         List<HangHoaDaTinhToanCache> items = new ArrayList<>();
         switch (type){
             case BaoCaoContains.DOANH_THU -> {
                 items = DataUtils.convertList(hdrRepo.groupByTopDT_T_ANY(groupByTopDT_T_ANY(fDate.getYear(),
-                                fDate.getMonthValue(), req)),
+                                fDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
                 break;
             }
             case BaoCaoContains.SO_LUONG -> {
                 items = DataUtils.convertList(hdrRepo.groupByTopSL_T_ANY(groupByTopSL_T_ANY(fDate.getYear(),
-                                fDate.getMonthValue(), req)),
+                                fDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
                 break;
             }
             case BaoCaoContains.TSLN -> {
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(groupByTopTSLN_T_ANY(fDate.getYear(),
-                                fDate.getMonthValue(), req)),
+                                fDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
                 break;
             }
@@ -547,39 +562,39 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         return items;
     }
 
-    private List<HangHoaDaTinhToanCache> chuaQua1ThangO2ThangKhacNhau(GiaoDichHangHoaReq req, LocalDate fDate, LocalDate tDate, int type) throws Exception {
+    private List<HangHoaDaTinhToanCache> chuaQua1ThangO2ThangKhacNhau(GiaoDichHangHoaReq req, LocalDate fDate, LocalDate tDate, int type
+    , int top) throws Exception {
         List<HangHoaDaTinhToanCache> items = new ArrayList<>();
         List<HangHoaDaTinhToanCache> itemLast = new ArrayList<>();
+        var pageSize = req.getPageSize();
+        req.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
         switch (type){
             case BaoCaoContains.DOANH_THU -> {
-                req.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 items = DataUtils.convertList(hdrRepo.groupByTopDT_T_ANY(groupByTopDT_T_ANY(fDate.getYear(),
-                                fDate.getMonthValue(), req)),
+                                fDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
 
                 itemLast = DataUtils.convertList(hdrRepo.groupByTopDT_T_ANY(groupByTopDT_T_ANY(fDate.getYear(),
-                                tDate.getMonthValue(), req)),
+                                tDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
             }
             case BaoCaoContains.SO_LUONG -> {
-                req.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 items = DataUtils.convertList(hdrRepo.groupByTopSL_T_ANY(groupByTopSL_T_ANY(fDate.getYear(),
-                                fDate.getMonthValue(), req)),
+                                fDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
 
                 itemLast = DataUtils.convertList(hdrRepo.groupByTopSL_T_ANY(groupByTopSL_T_ANY(fDate.getYear(),
-                                tDate.getMonthValue(), req)),
+                                tDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
                 break;
             }
             case BaoCaoContains.TSLN -> {
-                req.setPageSize(req.getPageSize() + BaoCaoContains.MAX);
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(groupByTopTSLN_T_ANY(fDate.getYear(),
-                                fDate.getMonthValue(), req)),
+                                fDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
 
                 itemLast = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(groupByTopTSLN_T_ANY(fDate.getYear(),
-                                tDate.getMonthValue(), req)),
+                                tDate.getMonthValue(), req, fDate, tDate, top)),
                         HangHoaDaTinhToanCache.class);
                 break;
             }
@@ -601,7 +616,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         if(items != null){
             items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
         }
-        return items.stream().limit(req.getPageSize()).toList();
+        return items.stream().limit(pageSize).toList();
     }
 
     private static boolean isFirstAndLastMonthFull(LocalDate startDate, LocalDate endDate) {
@@ -614,9 +629,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     }
 
     //region GROUP BY T0
-    private String groupByTopSL_T0(int year, GiaoDichHangHoaReq req){
+    private String groupByTopSL_T0(int year, GiaoDichHangHoaReq req, int top){
         String entityName = "GiaoDichHangHoa_T0_"+ year;
-        return  "SELECT TOP(" + req.getPageSize() + ") " +
+        return  "SELECT TOP(" + top + ") " +
                 "s.tenNhomNganhHang, s.ThuocId, " +
                 "s.tenThuoc, s.tenDonVi" +
                 ", s.Tong as 'soLieuThiTruong'" +
@@ -634,9 +649,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 " ORDER BY s.Tong desc";
     }
 
-    private String groupByTopDT_T0(int year, GiaoDichHangHoaReq req){
+    private String groupByTopDT_T0(int year, GiaoDichHangHoaReq req, int top){
         String entityName = "GiaoDichHangHoa_T0_"+ year;
-        return  "SELECT TOP(" + req.getPageSize() + ") " +
+        return  "SELECT TOP(" + top + ") " +
                 "s.tenNhomNganhHang, s.ThuocId, " +
                 "s.tenThuoc, s.tenDonVi" +
                 ", s.Tong as 'soLieuThiTruong'" +
@@ -654,9 +669,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 " ORDER BY s.Tong desc";
     }
 
-    private String groupByTopTSLN_T0(int year, GiaoDichHangHoaReq req){
+    private String groupByTopTSLN_T0(int year, GiaoDichHangHoaReq req, int top){
         String entityName = "GiaoDichHangHoa_T0_"+ year;
-        return  "SELECT TOP(" + req.getPageSize() + ") " +
+        return  "SELECT TOP(" + top + ") " +
                 "s.tenNhomNganhHang, s.ThuocId, " +
                 "s.tenThuoc, s.tenDonVi, " +
                 "(CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
@@ -677,9 +692,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     }
     //endregion
     //region Search Top T0
-    private String searchTopDT_T0(int year, GiaoDichHangHoaReq req){
+    private String searchTopDT_T0(int year, GiaoDichHangHoaReq req, int top){
         String entityName = "GiaoDichHangHoa_T0_"+ year;
-        return "SELECT TOP(" + req.getPageSize() + ")" +
+        return "SELECT TOP(" + top + ")" +
                 "c.tenNhomNganhHang, c.ThuocId, " +
                 "c.tenThuoc, c.tenDonVi" +
                 ", c.TongBan as 'soLieuThiTruong'" +
@@ -730,9 +745,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     }
     //endregion
     //region Group By Day And Month
-    private String groupByTopSL_T_ANY(int year, int month, GiaoDichHangHoaReq req){
+    private String groupByTopSL_T_ANY(int year, int month, GiaoDichHangHoaReq req,
+                                      LocalDate fromDate, LocalDate toDate,
+                                      int top){
         String entityName = "GiaoDichHangHoa_T" + month + "_"+ year;
-        return "SELECT TOP(" + req.getPageSize() + ") " +
+        return "SELECT TOP(" + top + ") " +
                 "s.tenNhomNganhHang, s.ThuocId, " +
                 "s.tenThuoc, s.tenDonVi" +
                 ", s.Tong as 'soLieuThiTruong'" +
@@ -742,8 +759,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
                 ", SUM(c.TongSoLuong) as Tong FROM " + entityName + " c" +
                 " WHERE 1=1 " +
-                " AND (" + req.getFromDate() + " IS NULL OR c.NgayGiaoDich >= " + req.getFromDate() + ")" +
-                " AND (" + req.getToDate() + " IS NULL OR c.NgayGiaoDich <= "+ req.getToDate() +")" +
+                " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
+                " AND ('" + toDate + "' IS NULL OR c.NgayGiaoDich <= '"+ toDate +"')" +
                 " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                 " AND (" + req.getNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNganhHangId() + ") "+
                 " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
@@ -751,9 +768,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 " ORDER BY s.Tong desc";
     }
 
-    private String groupByTopDT_T_ANY(int year, int month, GiaoDichHangHoaReq req){
+    private String groupByTopDT_T_ANY(int year, int month, GiaoDichHangHoaReq req,
+                                      LocalDate fromDate, LocalDate toDate,
+                                      int top){
         String entityName = "GiaoDichHangHoa_T" + month + "_"+ year;
-        return "SELECT TOP(" + req.getPageSize() + ") " +
+        return "SELECT TOP(" + top + ") " +
                 "s.tenNhomNganhHang, s.ThuocId, " +
                 "s.tenThuoc, s.tenDonVi" +
                 ", s.Tong as 'soLieuThiTruong'" +
@@ -763,8 +782,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
                 ", SUM(c.tongBan) as Tong FROM " + entityName + " c" +
                 " WHERE 1=1 " +
-                " AND (" + req.getFromDate() + " IS NULL OR c.NgayGiaoDich >= " + req.getFromDate() + ")" +
-                " AND (" + req.getToDate() + " IS NULL OR c.NgayGiaoDich <= "+ req.getToDate() +")" +
+                " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
+                " AND ('" + toDate + "' IS NULL OR c.NgayGiaoDich <= '"+ toDate +"')" +
                 " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                 " AND (" + req.getNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNganhHangId() + ") "+
                 " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
@@ -772,9 +791,11 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 " ORDER BY s.Tong desc";
     }
 
-    private String groupByTopTSLN_T_ANY(int year, int month, GiaoDichHangHoaReq req){
+    private String groupByTopTSLN_T_ANY(int year, int month, GiaoDichHangHoaReq req,
+                                        LocalDate fromDate, LocalDate toDate,
+                                        int top){
         String entityName = "GiaoDichHangHoa_T" + month + "_"+ year;
-        return "SELECT TOP(" + req.getPageSize() + ") " +
+        return "SELECT TOP(" + top + ") " +
                 "s.tenNhomNganhHang, s.ThuocId, " +
                 "s.tenThuoc, s.tenDonVi, " +
                 "(CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
@@ -785,8 +806,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 ", SUM(c.tongNhap) as tongNhap, SUM(c.tongBan) as tongBan " +
                 "FROM " + entityName + " c" +
                 " WHERE 1=1 " +
-                " AND (" + req.getFromDate() + " IS NULL OR c.NgayGiaoDich >= " + req.getFromDate() + ")" +
-                " AND (" + req.getToDate() + " IS NULL OR c.NgayGiaoDich <= "+ req.getToDate() +")" +
+                " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
+                " AND ('" + toDate + "' IS NULL OR c.NgayGiaoDich <= '"+ toDate +"')" +
                 " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                 " AND (" + req.getNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNganhHangId() + ") "+
                 " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
