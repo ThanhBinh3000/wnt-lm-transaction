@@ -7,12 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
-import vn.com.gsoft.transaction.entity.GiaoDichHangHoa_T1_2024;
-import vn.com.gsoft.transaction.entity.GiaoDichHangHoa_T2_2024;
-import vn.com.gsoft.transaction.entity.GiaoDichHangHoa_T3_2024;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Repository
@@ -41,93 +37,6 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
 
     @Query(value = "SELECT TOP(:top) " +
-            "'TenNhomNganhHang' AS tenNhomNganhHang, s.ThuocId, " +
-            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', 0.0 as 'GB', 0.0 as 'GN', 0.0 as 'GBCS', 0.0 as 'GNCS'" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ", (SELECT SUM(c1.GiaBan * c1.SoLuong) FROM GiaoDichHangHoa c1" +
-            " WHERE 1=1" +
-            " AND c1.MaCoSo = :#{#param.maCoSo}" +
-            " AND c1.ThuocId = s.ThuocId" +
-            " AND (:#{#param.fromDate} IS NULL OR c1.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c1.NgayGiaoDich <= :#{#param.toDate})) as 'soLieuCoSo' FROM " +
-            "(SELECT c.ThuocId, SUM(c.GiaBan * c.SoLuong) as Tong FROM GiaoDichHangHoa c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " GROUP BY c.thuocId) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopDoanhThu(@Param("param") GiaoDichHangHoaReq param ,
-                                            @Param("top") Integer top);
-
-    @Query(value = "SELECT TOP(:top) " +
-            "'TenNhomNganhHang' AS tenNhomNganhHang, s.ThuocId, " +
-            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', 0.0 as 'GB', 0.0 as 'GN', 0.0 as 'GBCS', 0.0 as 'GNCS'" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ", (SELECT SUM(c1.SoLuong) FROM GiaoDichHangHoa c1" +
-            " WHERE 1=1" +
-            " AND c1.MaCoSo = :#{#param.maCoSo}" +
-            " AND c1.ThuocId = s.ThuocId" +
-            " AND (:#{#param.fromDate} IS NULL OR c1.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND ((:#{#param.loaiGiaoDich} IS NULL) OR (c1.LoaiGiaoDich = :#{#param.loaiGiaoDich})) "+
-            " AND (:#{#param.toDate} IS NULL OR c1.NgayGiaoDich <= :#{#param.toDate})) as 'soLieuCoSo' FROM " +
-            "(SELECT c.ThuocId, SUM(c.SoLuong) as Tong FROM GiaoDichHangHoa c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " AND (:#{#param.loaiGiaoDich} IS NULL OR c.LoaiGiaoDich = :#{#param.loaiGiaoDich}) "+
-            " GROUP BY c.thuocId) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopDoanhSoLuong(@Param("param") GiaoDichHangHoaReq param ,
-                                   @Param("top") Integer top);
-    @Query(value = "SELECT TOP(:top) " +
-            "'TenNhomNganhHang' AS tenNhomNganhHang, s.ThuocId, " +
-            "'Tenhang' as 'tenThuoc', 'TenDonVi' as 'tenDonVi', (s.GB - s.GN)/s.GN as 'soLieuThiTruong', 0.0 as 'soLieuCoSo'" +
-            ", s.GN, s.GB" +
-            ", (SELECT Max(c1.GiaBan) FROM GiaoDichHangHoa c1" +
-            " WHERE 1=1" +
-            " AND c1.MaCoSo = :#{#param.maCoSo}" +
-            " AND c1.ThuocId = s.ThuocId" +
-            " AND c1.LoaiGiaoDich = 2" +
-            " AND (:#{#param.fromDate} IS NULL OR c1.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c1.NgayGiaoDich <= :#{#param.toDate})) as 'GBCS'" +
-            ", (SELECT Min(c1.GiaNhap) FROM GiaoDichHangHoa c1" +
-            " WHERE 1=1" +
-            " AND c1.MaCoSo = :#{#param.maCoSo}" +
-            " AND c1.ThuocId = s.ThuocId" +
-            " AND c1.LoaiGiaoDich = 1" +
-            " AND c1.GiaBan > 0 AND c1.GiaNhap > 0" +
-            " AND (:#{#param.fromDate} IS NULL OR c1.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c1.NgayGiaoDich <= :#{#param.toDate})) as 'GNCS'" +
-            " FROM " +
-            "(SELECT c.ThuocId, " +
-            " MIN(CASE WHEN c.LoaiGiaoDich = 1 THEN GiaNhap ELSE NULL END) as GN, " +
-            " MAX(CASE WHEN c.LoaiGiaoDich = 2 THEN GiaBan ELSE NULL END) as GB" +
-            " FROM GiaoDichHangHoa c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " GROUP BY c.thuocId) s" +
-            " WHERE s.GN > 0 AND s.GN >= 1000" +
-            " ORDER BY soLieuThiTruong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopDoanhTSLN(@Param("param") GiaoDichHangHoaReq param,
-                                    @Param("top") Integer top);
-
-    @Query(value = "SELECT TOP(:top) " +
             "s.tenNhomNganhHang, s.ThuocId, " +
             "s.tenThuoc, s.tenDonVi, 0.0 as 'GB', 0.0 as 'GN', 0.0 as 'GBCS', 0.0 as 'GNCS'" +
             ", s.Tong as 'soLieuThiTruong'" +
@@ -151,23 +60,6 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> groupByTopDoanhSoLuongPushRedis(@Param("param") GiaoDichHangHoaReq param ,
                                        @Param("top") Integer top);
-    @Query(value =
-            "(SELECT c.ThuocId, SUM(c.SoLuong) as Tong FROM GiaoDichHangHoa c" +
-            " WHERE 1=1 " +
-            " AND c.MaCoSo = :#{#param.maCoSo}" +
-            " AND c.thuocId in (:ids)" +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " AND (:#{#param.loaiGiaoDich} IS NULL OR c.LoaiGiaoDich = :#{#param.loaiGiaoDich}) "+
-            " GROUP BY c.thuocId) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopDoanhSoLuongByMaCoSo(@Param("param") GiaoDichHangHoaReq param ,
-                                               @Param("ids") Long[] ids);
 
     @Query(value = "SELECT c.id, c.thuocid,c.tenThuoc," +
             "c.ngayGiaoDich, c.nhomDuocLyId, c.nhomNganhHangId," +
@@ -184,6 +76,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> searchListCache(@Param("param") GiaoDichHangHoaReq param);
 
+    //region So Lieu Co So
     @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(c.GiaBan * c.SoLuong) as 'ban' , 0.0 as 'nhap', 0.0 as 'soLuong'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
@@ -228,197 +121,61 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             , nativeQuery = true
     )
     List<Tuple> groupByTopTSLNCS(@Param("param") GiaoDichHangHoaReq param);
-
-    //region THÁNG 1-2024
-    @Query(value = "SELECT TOP(:top) " +
-            "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-            "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-            " FROM " +
-            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-            ", SUM(c.TongSoLuong) as Tong FROM GiaoDichHangHoa_T1_2024 c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopSLT1_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
-
-    @Query(value = "SELECT TOP(:top) " +
-            "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-            "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-            " FROM " +
-            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-            ", SUM(c.tongBan) as Tong FROM GiaoDichHangHoa_T1_2024 c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopDTT1_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
-
-    @Query(value = "SELECT TOP(:top) " +
-            "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-            "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-            " FROM " +
-            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-            ", MAX(c.TSLN) as Tong FROM GiaoDichHangHoa_T1_2024 c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-            " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopTSLNT1_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
-    @Query(value =
-            "(SELECT c FROM GiaoDichHangHoa_T1_2024 c" +
-                    " WHERE 1=1 " +
-                    " AND (:#{#param.fromDate} IS NULL OR c.NgayGiaoDich >= :#{#param.fromDate})" +
-                    " AND (:#{#param.toDate} IS NULL OR c.NgayGiaoDich <= :#{#param.toDate})" +
-                    " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-                    " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-                    " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-                    " AND (:#{#param.loaiGiaoDich} IS NULL OR c.LoaiGiaoDich = :#{#param.loaiGiaoDich}) "+
-                    " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> searchListT1_2024(@Param("param") GiaoDichHangHoaReq param);
     //endregion
-    //region THÁNG 0_2024
-    @Query(value = "SELECT TOP(:top) " +
-            "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-            "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-            " FROM " +
-            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-            ", SUM(c.TongSoLuong) as Tong FROM GiaoDichHangHoa_T0_2024 c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " AND (c.type in (:#{#param.types})) " +
-            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY s.Tong desc"
-            , nativeQuery = true
-    )
-    List<Tuple> groupByTopSLT0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
 
-    @Query(value = "SELECT TOP(:top) " +
-            "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi" +
-            ", s.Tong as 'soLieuThiTruong'" +
-            ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-            "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-            " FROM " +
-            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-            ", SUM(c.tongBan) as Tong FROM GiaoDichHangHoa_T0_2024 c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " AND (c.type in (:#{#param.types})) " +
-            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-            " ORDER BY s.Tong desc"
+    //region NGAY_THANG
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            " exec sp_executesql @query"
             , nativeQuery = true
     )
-    List<Tuple> groupByTopDTT0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
+    List<Tuple> groupByTopSL_T_ANY(@Param("query") String query);
 
-    @Query(value = "SELECT TOP(:top) " +
-            "s.tenNhomNganhHang, s.ThuocId, " +
-            "s.tenThuoc, s.tenDonVi, " +
-            "(CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
-            ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-            "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-            " FROM " +
-            "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi"  +
-            ", SUM(c.tongNhap) as tongNhap, SUM(c.tongBan) as tongBan " +
-            " FROM GiaoDichHangHoa_T0_2024 c" +
-            " WHERE 1=1 " +
-            " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-            " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-            " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " AND (c.type in (:#{#param.types})) " +
-            " AND c.tongNhap > 0"+
-            " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-           " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc"
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            " exec sp_executesql @query"
             , nativeQuery = true
     )
-    List<Tuple> groupByTopTSLNT0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
-    @Query(value =
-            "SELECT TOP(:top)" +
-                    "c.tenNhomNganhHang, c.ThuocId, " +
-                    "c.tenThuoc, c.tenDonVi" +
-                    ", c.TongBan as 'soLieuThiTruong'" +
-                    ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                    "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-                    " FROM GiaoDichHangHoa_T0_2024 c" +
-                    " WHERE 1=1 " +
-                    " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-                    " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-                    " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-                    " AND (:#{#param.type} IS NULL OR c.type = :#{#param.type}) " +
-                    " ORDER BY c.TongBan desc", nativeQuery = true
-    )
-    List<Tuple> searchListTop_DT_T0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
+    List<Tuple> groupByTopDT_T_ANY(@Param("query") String query);
 
-    @Query(value =
-            "SELECT TOP(:top) " +
-                    "c.tenNhomNganhHang, c.ThuocId, " +
-                    "c.tenThuoc, c.tenDonVi" +
-                    ", c.TongSoLuong as 'soLieuThiTruong'" +
-                    ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                    "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-                    " FROM GiaoDichHangHoa_T0_2024 c" +
-                    " WHERE 1=1 " +
-                    " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-                    " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-                    " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-                    " AND (:#{#param.type} IS NULL OR c.type = :#{#param.type}) " +
-                    " ORDER BY c.TongSoLuong desc"
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            " exec sp_executesql @query"
             , nativeQuery = true
     )
-    List<Tuple> searchListTop_SL_T0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
-    @Query(value =
-            "SELECT TOP(:top) " +
-                    "c.tenNhomNganhHang, c.ThuocId, " +
-                    "c.tenThuoc, c.tenDonVi ," +
-                    "(CASE WHEN c.tongNhap > 0 THEN ((c.tongBan - c.tongNhap) / c.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
-                    ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                    "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
-                    " FROM GiaoDichHangHoa_T0_2024 c" +
-                    " WHERE 1=1 " +
-                    " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
-                    " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
-                    " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-                    " AND (:#{#param.type} IS NULL OR c.type = :#{#param.type}) " +
-                    " AND c.tongNhap > 0"+
-                    " ORDER BY soLieuThiTruong desc"
+    List<Tuple> groupByTopTSLN_T_ANY(@Param("query") String query);
+    //endregion
+
+    //region THÁNG NĂM
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            " exec sp_executesql @query"
             , nativeQuery = true
     )
-    List<Tuple> searchListTop_TSLN_T0_2024(@Param("param") GiaoDichHangHoaReq param, Integer top);
+    List<Tuple> groupByTopSL_T0(@Param("query") String query);
+
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            " exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    List<Tuple> groupByTopDT_T0(@Param("query") String query);
+
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            " exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    List<Tuple> groupByTopTSLN_T0(@Param("query") String query);
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+            "exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    List<Tuple> searchListTop_DT_T0(@Param("query") String query);
+
+    @Query(value ="DECLARE @query nvarchar(1024) =:query" +
+            "exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    List<Tuple> searchListTop_SL_T0(@Param("query") String query);
+    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+                    "exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    List<Tuple> searchListTop_TSLN_T0(@Param("query") String query);
     //endregion
 }
