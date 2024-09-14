@@ -10,6 +10,7 @@ import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHoa, GiaoDichHangHoaReq, Long> {
@@ -161,21 +162,29 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             , nativeQuery = true
     )
     List<Tuple> groupByTopTSLN_T0(@Param("query") String query);
-    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+
+    @Query(value = "DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
             , nativeQuery = true
     )
     List<Tuple> searchListTop_DT_T0(@Param("query") String query);
 
-    @Query(value ="DECLARE @query nvarchar(1024) =:query" +
+    @Query(value ="DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
             , nativeQuery = true
     )
     List<Tuple> searchListTop_SL_T0(@Param("query") String query);
-    @Query(value = "DECLARE @query nvarchar(1024) =:query" +
+
+    @Query(value = "DECLARE @query nvarchar(1024) =:query " +
                     "exec sp_executesql @query"
             , nativeQuery = true
     )
     List<Tuple> searchListTop_TSLN_T0(@Param("query") String query);
     //endregion
+
+    //check table có tồn tại không
+    @Query(value = "select c.name from LMNTDB.sys.tables c where" +
+            " 1=1 AND" +
+            " c.name = :tableName", nativeQuery = true)
+    Optional<Tuple> checkTableExit(@Param("tableName") String tableName);
 }
