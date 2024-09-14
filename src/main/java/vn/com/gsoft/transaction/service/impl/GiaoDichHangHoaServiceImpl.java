@@ -387,8 +387,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     boolean found = false;
                     for (HangHoaDaTinhToanCache hh : items) {
                         if (hh.getThuocId().equals(entry.getKey())) {
-                            var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
-                            hh.setSoLieuThiTruong(sum);
+                            if(type == BaoCaoContains.TSLN){
+                                if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
+                                    hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                                }
+                            }else {
+                                var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
+                                hh.setSoLieuThiTruong(sum);
+                            }
                             found = true;
                             break;
                         }
@@ -425,8 +431,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     boolean found = false;
                     for (HangHoaDaTinhToanCache hh : items) {
                         if (hh.getThuocId().equals(entry.getKey())) {
-                            var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
-                            hh.setSoLieuThiTruong(sum);
+                            if(type == BaoCaoContains.TSLN){
+                                if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
+                                    hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                                }
+                            }else {
+                                var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
+                                hh.setSoLieuThiTruong(sum);
+                            }
                             found = true;
                             break;
                         }
@@ -481,8 +493,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             boolean found = false;
             for (HangHoaDaTinhToanCache hh : items) {
                 if (hh.getThuocId().equals(entry.getKey())) {
-                    var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
-                    hh.setSoLieuThiTruong(sum);
+                    if(type == BaoCaoContains.TSLN){
+                        if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
+                            hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                        }
+                    }else {
+                        var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
+                        hh.setSoLieuThiTruong(sum);
+                    }
                     found = true;
                     break;
                 }
@@ -501,16 +519,19 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                                                           int type, boolean isStart, boolean isEnd, long months){
         List<HangHoaDaTinhToanCache> items = new ArrayList<>();
         var arrMonth = new ArrayList<Integer>();
-        var count = 0;
-        var addMonth = 0;
-        count = isStart ? 0 : 1;
-        addMonth = isEnd ? 1 : 0;
-        for (var  i = count ; i < months + addMonth; i++){
-            arrMonth.add(fDate.getMonthValue() + i);
+
+        var startMonth = fDate.getMonthValue();
+        var endMonth = tDate.getMonthValue();
+        for (int m = startMonth + 1; m <= endMonth - 1; m++) {
+            arrMonth.add(m);
         }
-        if(months >= 1 && !isFirstAndLastMonthFull(fDate, tDate)){
-            arrMonth.add((int)(tDate.getMonthValue() - 1L));
+        if (isStart) {
+            arrMonth.add(0, startMonth);
         }
+        if (isEnd) {
+            arrMonth.add(endMonth);
+        }
+
         req.setTypes(arrMonth.toArray(new Integer[arrMonth.size()]));
         if(arrMonth.size() > 0){
             items = groupByTop_T0(fDate.getYear(), req, req.getPageSize() + 100, type);
@@ -546,8 +567,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 boolean found = false;
                 for (HangHoaDaTinhToanCache hh : items) {
                     if (hh.getThuocId().equals(entry.getKey())) {
-                        var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
-                        hh.setSoLieuThiTruong(sum);
+                        if(type == BaoCaoContains.TSLN){
+                            if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
+                                hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                            }
+                        }else {
+                            var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
+                            hh.setSoLieuThiTruong(sum);
+                        }
                         found = true;
                         break;
                     }
@@ -616,8 +643,15 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     boolean found = false;
                     for (HangHoaDaTinhToanCache hh : items) {
                         if (hh.getThuocId().equals(entry.getKey())) {
-                            var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
-                            hh.setSoLieuThiTruong(sum);
+                            if(type == BaoCaoContains.TSLN){
+                                if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
+                                    hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                                }
+                            }else {
+                                var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
+                                hh.setSoLieuThiTruong(sum);
+                            }
+
                             found = true;
                             break;
                         }
@@ -689,21 +723,21 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "s.tenNhomNganhHang, s.ThuocId, " +
                         "s.tenThuoc, s.tenDonVi, " +
-                        "(CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
+                        "(CASE WHEN s.TongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.TongBanVoiGiaNhap) / s.TongBanVoiGiaNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " +
                         "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi"  +
-                        ", SUM(c.tongNhap) as tongNhap, SUM(c.tongBan) as tongBan " +
+                        ", SUM(c.tongBanVoiGiaNhap) as tongBanVoiGiaNhap, SUM(c.tongBan) as tongBan " +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
-                        " AND c.tongNhap > 0"+
+                        " AND c.TongBanVoiGiaNhap > 0"+
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-                        " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc";
+                        " ORDER BY (CASE WHEN s.TongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.TongBanVoiGiaNhap) / s.TongBanVoiGiaNhap) * 100 ELSE NULL END) desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
                 break;
@@ -760,7 +794,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "c.tenNhomNganhHang, c.ThuocId, " +
                         "c.tenThuoc, c.tenDonVi ," +
-                        "(CASE WHEN c.tongNhap > 0 THEN ((c.tongBan - c.tongNhap) / c.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
+                        "(CASE WHEN c.TongBanVoiGiaNhap > 0 THEN ((c.tongBan - c.TongBanVoiGiaNhap) / c.TongBanVoiGiaNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " + entityName + " c" +
@@ -769,7 +803,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (" + req.getType() + " IS NULL OR c.type = "+ req.getType() +") " +
-                        " AND c.tongNhap > 0"+
+                        " AND c.TongBanVoiGiaNhap > 0"+
                         " ORDER BY soLieuThiTruong desc";
                 items = DataUtils.convertList(hdrRepo.searchListTop_TSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -837,12 +871,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "s.tenNhomNganhHang, s.ThuocId, " +
                         "s.tenThuoc, s.tenDonVi, " +
-                        "(CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
+                        "(CASE WHEN s.TongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.TongBanVoiGiaNhap) / s.TongBanVoiGiaNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " +
                         "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-                        ", SUM(c.tongNhap) as tongNhap, SUM(c.tongBan) as tongBan " +
+                        ", SUM(c.tongBanVoiGiaNhap) as tongBanVoiGiaNhap, SUM(c.tongBan) as tongBan " +
                         "FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
@@ -850,9 +884,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
-                        " AND c.tongNhap > 0"+
+                        " AND c.tongBanVoiGiaNhap > 0"+
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-                        " ORDER BY (CASE WHEN s.tongNhap > 0 THEN ((s.tongBan - s.tongNhap) / s.tongNhap) * 100 ELSE NULL END) desc";
+                        " ORDER BY (CASE WHEN s.tongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.tongBanVoiGiaNhap) / s.tongBanVoiGiaNhap) * 100 ELSE NULL END) desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(query),
                         HangHoaDaTinhToanCache.class);
                 break;
@@ -861,15 +895,6 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         return items;
     }
     //endregion
-
-    private static boolean isFirstAndLastMonthFull(LocalDate startDate, LocalDate endDate) {
-        LocalDate endOfFirstMonth = YearMonth.from(startDate).atEndOfMonth();
-        long daysInFirstMonth = ChronoUnit.DAYS.between(startDate, endOfFirstMonth.plusDays(1));
-        LocalDate startOfLastMonth = YearMonth.from(endDate).atDay(1);
-        long daysInLastMonth = ChronoUnit.DAYS.between(startOfLastMonth, endDate.plusDays(1));
-        long totalDays = daysInFirstMonth + daysInLastMonth;
-        return totalDays > 31;
-    }
 
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();

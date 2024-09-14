@@ -107,7 +107,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> groupByTopSLCS(@Param("param") GiaoDichHangHoaReq param);
     @Query(value = "SELECT c.ThuocId as 'thuocId'" +
-            ", (CASE WHEN SUM(c.soLuong * GiaNhap) > 0 THEN ((SUM(c.soLuong * GiaBan) - SUM(c.soLuong * GiaNhap)) / SUM(c.soLuong * GiaNhap)) * 100 ELSE 0.0 END) as 'soLuong' " +
+            ", (CASE WHEN SUM(c.tongBanVoiGiaNhap) > 0 THEN ((SUM(c.tongBan) - SUM(c.tongBanVoiGiaNhap)) / SUM(c.tongBanVoiGiaNhap)) * 100 ELSE 0.0 END) as 'soLuong' " +
             ", 0.0 as 'nhap', 0.0 as 'ban'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
