@@ -91,7 +91,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         //lấy ra doanh so cs
-        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+        if(userInfo.getMaCoSo() != null
+                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null
+                && items != null){
             List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
             req.setThuocIds(ids.toArray(new Long[ids.size()]));
             var dataCS = DataUtils.convertList(hdrRepo.groupByTopDoanhThuCS(req), DoanhThuCS.class);
@@ -139,7 +141,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = searchTop_T0(0, req, req.getPageSize(), BaoCaoContains.SO_LUONG);
         }
 
-        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+        if(userInfo.getMaCoSo() != null
+                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null
+                && items != null){
             List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
             req.setThuocIds(ids.toArray(new Long[ids.size()]));
             var dataCS = DataUtils.convertList(hdrRepo.groupByTopSLCS(req), DoanhThuCS.class);
@@ -187,7 +191,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         //lấy ra doanh so cs
-        if(userInfo.getMaCoSo() != null && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null){
+        if(userInfo.getMaCoSo() != null
+                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null
+                && items != null){
             List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
             req.setThuocIds(ids.toArray(new Long[ids.size()]));
             var dataCS = DataUtils.convertList(hdrRepo.groupByTopTSLNCS(req), DoanhThuCS.class);
@@ -488,27 +494,30 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 break;
             }
         }
-        var groupItems = itemLast.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
-        for (Map.Entry<Long, List<HangHoaDaTinhToanCache>> entry : groupItems.entrySet()) {
-            boolean found = false;
-            for (HangHoaDaTinhToanCache hh : items) {
-                if (hh.getThuocId().equals(entry.getKey())) {
-                    if(type == BaoCaoContains.TSLN){
-                        if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
-                            hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+        if(itemLast != null){
+            var groupItems = itemLast.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            for (Map.Entry<Long, List<HangHoaDaTinhToanCache>> entry : groupItems.entrySet()) {
+                boolean found = false;
+                for (HangHoaDaTinhToanCache hh : items) {
+                    if (hh.getThuocId().equals(entry.getKey())) {
+                        if(type == BaoCaoContains.TSLN){
+                            if(hh.getSoLieuThiTruong().compareTo(entry.getValue().get(0).getSoLieuThiTruong()) < 0){
+                                hh.setSoLieuThiTruong(entry.getValue().get(0).getSoLieuThiTruong());
+                            }
+                        }else {
+                            var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
+                            hh.setSoLieuThiTruong(sum);
                         }
-                    }else {
-                        var sum = hh.getSoLieuThiTruong().add(entry.getValue().get(0).getSoLieuThiTruong());
-                        hh.setSoLieuThiTruong(sum);
+                        found = true;
+                        break;
                     }
-                    found = true;
-                    break;
+                }
+                if (!found) {
+                    items.add(entry.getValue().get(0));
                 }
             }
-            if (!found) {
-                items.add(entry.getValue().get(0));
-            }
         }
+
         if(items != null){
             items.sort((hh1, hh2) -> hh2.getSoLieuThiTruong().compareTo(hh1.getSoLieuThiTruong()));
         }
