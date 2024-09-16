@@ -701,6 +701,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
+                        " AND c.tongBan > 0" +
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopDT_T0(query),
@@ -722,6 +723,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
+                        " AND c.TongSoLuong > 0" +
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopSL_T0(query),
@@ -732,21 +734,21 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "s.tenNhomNganhHang, s.ThuocId, " +
                         "s.tenThuoc, s.tenDonVi, " +
-                        "(CASE WHEN s.TongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.TongBanVoiGiaNhap) / s.TongBanVoiGiaNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
+                        "s.tsln  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " +
                         "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi"  +
-                        ", SUM(c.tongBanVoiGiaNhap) as tongBanVoiGiaNhap, SUM(c.tongBan) as tongBan " +
+                        ", Max(c.tsln) as tsln " +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
-                        " AND c.TongBanVoiGiaNhap > 0"+
+                        " AND c.tsln is not null"+
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-                        " ORDER BY (CASE WHEN s.TongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.TongBanVoiGiaNhap) / s.TongBanVoiGiaNhap) * 100 ELSE NULL END) desc";
+                        " ORDER BY s.tsln desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
                 break;
@@ -776,6 +778,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (" + req.getType() + " IS NULL OR c.type = "+ req.getType() +") " +
+                        " AND c.tongBan > 0" +
                         " ORDER BY c.TongBan desc";
                 items = DataUtils.convertList(hdrRepo.searchListTop_DT_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -794,6 +797,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (" + req.getType() + " IS NULL OR c.type = "+ req.getType() +") " +
+                        " AND c.tongSoLuong > 0" +
                         " ORDER BY c.TongSoLuong desc";
                 items = DataUtils.convertList(hdrRepo.searchListTop_SL_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -803,7 +807,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "c.tenNhomNganhHang, c.ThuocId, " +
                         "c.tenThuoc, c.tenDonVi ," +
-                        "(CASE WHEN c.TongBanVoiGiaNhap > 0 THEN ((c.tongBan - c.TongBanVoiGiaNhap) / c.TongBanVoiGiaNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
+                        "c.tsln  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " + entityName + " c" +
@@ -812,7 +816,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (" + req.getType() + " IS NULL OR c.type = "+ req.getType() +") " +
-                        " AND c.TongBanVoiGiaNhap > 0"+
+                        " AND c.tsln is not null"+
                         " ORDER BY soLieuThiTruong desc";
                 items = DataUtils.convertList(hdrRepo.searchListTop_TSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -848,6 +852,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
+                        " AND c.tongBan > 0" +
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopDT_T_ANY(query),
@@ -870,6 +875,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
+                        " AND c.TongSoLuong > 0" +
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopSL_T_ANY(query),
@@ -880,12 +886,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "s.tenNhomNganhHang, s.ThuocId, " +
                         "s.tenThuoc, s.tenDonVi, " +
-                        "(CASE WHEN s.TongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.TongBanVoiGiaNhap) / s.TongBanVoiGiaNhap) * 100 ELSE NULL END)  as 'soLieuThiTruong'" +
+                        "s.tsln  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " +
                         "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-                        ", SUM(c.tongBanVoiGiaNhap) as tongBanVoiGiaNhap, SUM(c.tongBan) as tongBan " +
+                        ", Max(tsln) as tsln " +
                         "FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
@@ -893,9 +899,9 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
-                        " AND c.tongBanVoiGiaNhap > 0"+
+                        " AND c.tsln is not null"+
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-                        " ORDER BY (CASE WHEN s.tongBanVoiGiaNhap > 0 THEN ((s.tongBan - s.tongBanVoiGiaNhap) / s.tongBanVoiGiaNhap) * 100 ELSE NULL END) desc";
+                        " ORDER BY s.tsln desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(query),
                         HangHoaDaTinhToanCache.class);
                 break;
