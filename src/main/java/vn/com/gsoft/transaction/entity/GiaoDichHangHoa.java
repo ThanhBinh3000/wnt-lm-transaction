@@ -63,4 +63,8 @@ public class GiaoDichHangHoa extends BaseEntity {
     private String tenNhomNganhHang;
     @Column(name = "TSLN")
     private BigDecimal tsln;
+    @Column(name = "TongBanVoiGiaNhap")
+    private BigDecimal tongBanVoiGiaNhap;
+    @Column(name = "TongBan")
+    private BigDecimal tongBan;
 }
