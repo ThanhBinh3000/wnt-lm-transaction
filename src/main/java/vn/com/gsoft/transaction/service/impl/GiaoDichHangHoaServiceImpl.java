@@ -734,21 +734,22 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "s.tenNhomNganhHang, s.ThuocId, " +
                         "s.tenThuoc, s.tenDonVi, " +
-                        "s.tsln  as 'soLieuThiTruong'" +
+                        "((s.gb-s.gn) /s.gn) * 100  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " +
                         "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi"  +
-                        ", Max(c.tsln) as tsln " +
+                        ",avg(c.giabancs) as gb, avg(c.gianhapcs) as gn " +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
-                        " AND c.tsln is not null"+
+                        " AND c.giabancs > 0" +
+                        " AND c.gianhapcs > 0" +
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-                        " ORDER BY s.tsln desc";
+                        " ORDER BY ((s.gb-s.gn) /s.gn) * 100 desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
                 break;
@@ -807,7 +808,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "c.tenNhomNganhHang, c.ThuocId, " +
                         "c.tenThuoc, c.tenDonVi ," +
-                        "c.tsln  as 'soLieuThiTruong'" +
+                        "((c.giaBanCs-c.giaNhapCs) / c.giaNhapCs)* 100 as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " + entityName + " c" +
@@ -816,7 +817,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (" + req.getType() + " IS NULL OR c.type = "+ req.getType() +") " +
-                        " AND c.tsln is not null"+
+                        " AND c.gianhapcs >0"+
                         " ORDER BY soLieuThiTruong desc";
                 items = DataUtils.convertList(hdrRepo.searchListTop_TSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -886,12 +887,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 query = "SELECT TOP(" + top + ") " +
                         "s.tenNhomNganhHang, s.ThuocId, " +
                         "s.tenThuoc, s.tenDonVi, " +
-                        "s.tsln  as 'soLieuThiTruong'" +
+                        "((s.gb-s.gn) /s.gn) * 100  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
                         " FROM " +
                         "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
-                        ", Max(tsln) as tsln " +
+                        ",avg(c.giabancs) as gb, avg(c.gianhapcs) as gn " +
                         "FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
@@ -899,9 +900,10 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
-                        " AND c.tsln is not null"+
+                        " AND c.giabancs > 0" +
+                        " AND c.gianhapcs > 0" +
                         " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
-                        " ORDER BY s.tsln desc";
+                        " ORDER BY ((s.gb-s.gn) /s.gn) * 100 desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(query),
                         HangHoaDaTinhToanCache.class);
                 break;
@@ -914,6 +916,5 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
-
 
 }
