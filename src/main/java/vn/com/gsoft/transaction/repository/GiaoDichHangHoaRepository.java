@@ -78,7 +78,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     List<Tuple> searchListCache(@Param("param") GiaoDichHangHoaReq param);
 
     //region So Lieu Co So
-    @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(c.GiaBan * c.SoLuong) as 'ban' , 0.0 as 'nhap', 0.0 as 'soLuong'" +
+    @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(c.tongBan) as 'ban' , 0.0 as 'nhap', 0.0 as 'soLuong'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
             " AND c.maCoSo = :#{#param.maCoSo}" +
