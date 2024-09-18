@@ -78,7 +78,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     List<Tuple> searchListCache(@Param("param") GiaoDichHangHoaReq param);
 
     //region So Lieu Co So
-    @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(c.GiaBan * c.SoLuong) as 'ban' , 0.0 as 'nhap', 0.0 as 'soLuong'" +
+    @Query(value = "SELECT c.ThuocId as 'thuocId', SUM(c.tongBan) as 'ban' , 0.0 as 'nhap', 0.0 as 'soLuong'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
             " AND c.maCoSo = :#{#param.maCoSo}" +
@@ -107,7 +107,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> groupByTopSLCS(@Param("param") GiaoDichHangHoaReq param);
     @Query(value = "SELECT c.ThuocId as 'thuocId'" +
-            ", (CASE WHEN SUM(c.tongBanVoiGiaNhap) > 0 THEN ((SUM(c.tongBan) - SUM(c.tongBanVoiGiaNhap)) / SUM(c.tongBanVoiGiaNhap)) * 100 ELSE 0.0 END) as 'soLuong' " +
+            ", ((avg(c.giaBanCS) - avg(c.giaNhapCS))/avg(c.giaNhapCS)) * 100  as 'soLuong' " +
             ", 0.0 as 'nhap', 0.0 as 'ban'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
@@ -118,6 +118,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
             " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
             " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
+            " AND c.giaNhapCS > 0" +
             " GROUP BY c.thuocId"
             , nativeQuery = true
     )
