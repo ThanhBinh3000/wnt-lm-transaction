@@ -107,7 +107,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<Tuple> groupByTopSLCS(@Param("param") GiaoDichHangHoaReq param);
     @Query(value = "SELECT c.ThuocId as 'thuocId'" +
-            ", Max(c.tsln) as 'soLuong' " +
+            ", ((avg(c.giaBanCS) - avg(c.giaNhapCS))/avg(c.giaNhapCS)) * 100  as 'soLuong' " +
             ", 0.0 as 'nhap', 0.0 as 'ban'" +
             " FROM GiaoDichHangHoa c" +
             " WHERE 1=1 " +
@@ -118,7 +118,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             " AND (:#{#param.nhomDuocLyId} IS NULL OR c.nhomDuocLyId = :#{#param.nhomDuocLyId}) "+
             " AND (:#{#param.nhomNganhHangId} IS NULL OR c.nhomNganhHangId = :#{#param.nhomNganhHangId}) "+
             " AND (:#{#param.nhomHoatChatId} IS NULL OR c.nhomHoatChatId = :#{#param.nhomHoatChatId}) " +
-            " AND c.tsln is not null" +
+            " AND c.giaNhapCS > 0" +
             " GROUP BY c.thuocId"
             , nativeQuery = true
     )
