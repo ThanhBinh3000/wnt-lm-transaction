@@ -87,6 +87,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 items = tren1Nam(req, fDate, tDate, BaoCaoContains.DOANH_THU);
             }
         }else {
+            req.setType(0);
             items = searchTop_T0(0, req, req.getPageSize(), BaoCaoContains.DOANH_THU);
         }
 
@@ -138,6 +139,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 items = tren1Nam(req, fDate, tDate, BaoCaoContains.SO_LUONG);
             }
         }else {
+            req.setType(0);
             items = searchTop_T0(0, req, req.getPageSize(), BaoCaoContains.SO_LUONG);
         }
 
@@ -187,6 +189,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                 items = tren1Nam(req, fDate, tDate, BaoCaoContains.TSLN);
             }
         }else {
+            req.setType(0);
             items = searchTop_T0(0, req, req.getPageSize(), BaoCaoContains.TSLN);
         }
 
