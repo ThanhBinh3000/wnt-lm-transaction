@@ -1,18 +1,10 @@
 package vn.com.gsoft.transaction.service.impl;
 
-
-import com.ctc.wstx.util.DataUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.Tuple;
-import jakarta.persistence.criteria.From;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang.StringUtils;
-import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import vn.com.gsoft.transaction.constant.BaoCaoContains;
 import vn.com.gsoft.transaction.constant.LimitPageConstant;
@@ -26,9 +18,7 @@ import vn.com.gsoft.transaction.service.RedisListService;
 import vn.com.gsoft.transaction.util.system.DataUtils;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -91,22 +81,33 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = searchTop_T0(0, req, req.getPageSize(), BaoCaoContains.DOANH_THU);
         }
 
+        var cs = userInfo.getMaCoSo() != null
+                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null;
         //lấy ra doanh so cs
-        if(userInfo.getMaCoSo() != null
-                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null
-                && items != null){
-            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
-            req.setThuocIds(ids.toArray(new Long[ids.size()]));
-            var dataCS = DataUtils.convertList(hdrRepo.groupByTopDoanhThuCS(req), DoanhThuCS.class);
-            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
-            if(groupBy.size() > 0){
-                items.forEach(x->{
-                    if(groupBy.containsKey(x.getThuocId())){
-                        var value = groupBy.get(x.getThuocId());
-                        x.setSoLieuCoSo(value.get(0).getBan());
-                    }
-                });
+        if(items != null){
+            Map<Long, List<DoanhThuCS>> groupBy;
+            if(cs){
+                List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+                req.setThuocIds(ids.toArray(new Long[ids.size()]));
+                var dataCS = DataUtils.convertList(hdrRepo.groupByTopDoanhThuCS(req), DoanhThuCS.class);
+                groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            } else {
+                groupBy = new HashMap<>();
             }
+            items.forEach(x->{
+                if(groupBy.size() > 0 && groupBy.containsKey(x.getThuocId())){
+                    var value = groupBy.get(x.getThuocId());
+                    x.setSoLieuCoSo(value.get(0).getBan());
+                }
+                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                if(hh != null){
+                    x.setTenThuoc(hh.getTenThuoc());
+                    x.setTenDonVi(hh.getTenDonViLe());
+                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                    x.setTenNhomDuocLy(hh.getTenNhomDuocLy());
+                    x.setTenNhomHoatChat(hh.getTenNhomHoatChat());
+                }
+            });
         }
         return  items;
     }
@@ -143,17 +144,31 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             items = searchTop_T0(0, req, req.getPageSize(), BaoCaoContains.SO_LUONG);
         }
 
-        if(userInfo.getMaCoSo() != null
-                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null
-                && items != null){
-            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
-            req.setThuocIds(ids.toArray(new Long[ids.size()]));
-            var dataCS = DataUtils.convertList(hdrRepo.groupByTopSLCS(req), DoanhThuCS.class);
-            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+        var cs = userInfo.getMaCoSo() != null
+                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null;
+        //lấy ra doanh so cs
+        if(items != null){
+            Map<Long, List<DoanhThuCS>> groupBy;
+            if(cs){
+                List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+                req.setThuocIds(ids.toArray(new Long[ids.size()]));
+                var dataCS = DataUtils.convertList(hdrRepo.groupByTopSLCS(req), DoanhThuCS.class);
+                groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            } else {
+                groupBy = new HashMap<>();
+            }
             items.forEach(x->{
-                if(groupBy.containsKey(x.getThuocId())){
+                if(groupBy.size() > 0 && groupBy.containsKey(x.getThuocId())){
                     var value = groupBy.get(x.getThuocId());
-                    x.setSoLieuCoSo(value.get(0).getSoLuong());
+                    x.setSoLieuCoSo(value.get(0).getBan());
+                }
+                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                if(hh != null){
+                    x.setTenThuoc(hh.getTenThuoc());
+                    x.setTenDonVi(hh.getTenDonViLe());
+                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                    x.setTenNhomDuocLy(hh.getTenNhomDuocLy());
+                    x.setTenNhomHoatChat(hh.getTenNhomHoatChat());
                 }
             });
         }
@@ -194,17 +209,31 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         }
 
         //lấy ra doanh so cs
-        if(userInfo.getMaCoSo() != null
-                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null
-                && items != null){
-            List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
-            req.setThuocIds(ids.toArray(new Long[ids.size()]));
-            var dataCS = DataUtils.convertList(hdrRepo.groupByTopTSLNCS(req), DoanhThuCS.class);
-            var groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+        var cs = userInfo.getMaCoSo() != null
+                && userInfo.getAuthorities().stream().filter(x->x.getAuthority() =="DLGDHH") != null;
+        //lấy ra doanh so cs
+        if(items != null){
+            Map<Long, List<DoanhThuCS>> groupBy;
+            if(cs){
+                List<Long> ids = items.stream().map(x->x.getThuocId()).toList();
+                req.setThuocIds(ids.toArray(new Long[ids.size()]));
+                var dataCS = DataUtils.convertList(hdrRepo.groupByTopTSLNCS(req), DoanhThuCS.class);
+                groupBy = dataCS.stream().collect(Collectors.groupingBy(x -> x.getThuocId()));
+            } else {
+                groupBy = new HashMap<>();
+            }
             items.forEach(x->{
-                if(groupBy.containsKey(x.getThuocId())){
+                if(groupBy.size() > 0 && groupBy.containsKey(x.getThuocId())){
                     var value = groupBy.get(x.getThuocId());
-                    x.setSoLieuCoSo(value.get(0).getSoLuong());
+                    x.setSoLieuCoSo(value.get(0).getBan());
+                }
+                var hh = hangHoaRepo.findByThuocId(x.getThuocId());
+                if(hh != null){
+                    x.setTenThuoc(hh.getTenThuoc());
+                    x.setTenDonVi(hh.getTenDonViLe());
+                    x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
+                    x.setTenNhomDuocLy(hh.getTenNhomDuocLy());
+                    x.setTenNhomHoatChat(hh.getTenNhomHoatChat());
                 }
             });
         }
@@ -691,13 +720,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         switch (type){
             case BaoCaoContains.DOANH_THU ->{
                 query = "SELECT TOP(" + top + ") " +
-                        "s.tenNhomNganhHang, s.ThuocId, " +
-                        "s.tenThuoc, s.tenDonVi" +
+                        "NULL as 'tenThuoc', s.ThuocId, " +
+                        "NULL as 'tenNhomNganhHang',NULL as 'tenDonVi'" +
                         ", s.Tong as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " +
-                        "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
+                        "(SELECT c.ThuocId" +
                         ", SUM(c.tongBan) as Tong FROM "+ entityName +" c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -705,7 +735,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
                         " AND c.tongBan > 0" +
-                        " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+                        " GROUP BY c.thuocId) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopDT_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -713,13 +743,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
             case BaoCaoContains.SO_LUONG ->{
                 query = "SELECT TOP(" + top + ") " +
-                        "s.tenNhomNganhHang, s.ThuocId, " +
-                        "s.tenThuoc, s.tenDonVi" +
+                        "NULL as 'tenNhomNganhHang', s.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'" +
                         ", s.Tong as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " +
-                        "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
+                        "(SELECT c.ThuocId" +
                         ", SUM(c.TongSoLuong) as Tong FROM "+ entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -727,7 +758,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
                         " AND c.TongSoLuong > 0" +
-                        " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+                        " GROUP BY c.thuocId) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopSL_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -735,13 +766,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
             case BaoCaoContains.TSLN ->{
                 query = "SELECT TOP(" + top + ") " +
-                        "s.tenNhomNganhHang, s.ThuocId, " +
-                        "s.tenThuoc, s.tenDonVi, " +
+                        "NULL as 'tenNhomNganhHang', s.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi', " +
                         "((s.gb-s.gn) /s.gn) * 100  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " +
-                        "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi"  +
+                        "(SELECT c.ThuocId"  +
                         ",avg(c.giabancs) as gb, avg(c.gianhapcs) as gn " +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
@@ -751,7 +783,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (c.type in (" + StringUtils.join(req.getTypes(), ',') + ")) " +
                         " AND c.giabancs > 0" +
                         " AND c.gianhapcs > 0" +
-                        " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+                        " GROUP BY c.thuocId) s" +
                         " ORDER BY ((s.gb-s.gn) /s.gn) * 100 desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T0(query),
                         HangHoaDaTinhToanCache.class);
@@ -771,11 +803,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         switch (type){
             case BaoCaoContains.DOANH_THU -> {
                 query = "SELECT TOP(" + top + ") " +
-                        "c.tenNhomNganhHang, c.ThuocId, " +
-                        "c.tenThuoc, c.tenDonVi" +
+                        "NULL as 'tenNhomNganhHang', c.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'" +
                         ", c.TongBan as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -790,11 +823,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
             case BaoCaoContains.SO_LUONG -> {
                 query = "SELECT TOP(" + top + ") " +
-                        "c.tenNhomNganhHang, c.ThuocId, " +
-                        "c.tenThuoc, c.tenDonVi" +
+                        "NULL as 'tenNhomNganhHang', c.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'" +
                         ", c.TongSoLuong as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -809,11 +843,12 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
             case BaoCaoContains.TSLN -> {
                 query = "SELECT TOP(" + top + ") " +
-                        "c.tenNhomNganhHang, c.ThuocId, " +
-                        "c.tenThuoc, c.tenDonVi ," +
+                        "NULL as 'tenNhomNganhHang', c.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'," +
                         "((c.giaBanCs-c.giaNhapCs) / c.giaNhapCs)* 100 as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo', " +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -842,13 +877,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
         switch (type){
             case BaoCaoContains.DOANH_THU -> {
                 query = "SELECT TOP(" + top + ") " +
-                        "s.tenNhomNganhHang, s.ThuocId, " +
-                        "s.tenThuoc, s.tenDonVi" +
+                        "NULL as 'tenNhomNganhHang', s.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'" +
                         ", s.Tong as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " +
-                        "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
+                        "(SELECT c.ThuocId" +
                         ", SUM(c.tongBan) as Tong FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
@@ -857,7 +893,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND c.tongBan > 0" +
-                        " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+                        " GROUP BY c.thuocId) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopDT_T_ANY(query),
                         HangHoaDaTinhToanCache.class);
@@ -865,13 +901,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
             case BaoCaoContains.SO_LUONG -> {
                 query = "SELECT TOP(" + top + ") " +
-                        "s.tenNhomNganhHang, s.ThuocId, " +
-                        "s.tenThuoc, s.tenDonVi" +
+                        "NULL as 'tenNhomNganhHang', s.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'" +
                         ", s.Tong as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " +
-                        "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
+                        "(SELECT c.ThuocId" +
                         ", SUM(c.TongSoLuong) as Tong FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND ('" + fromDate + "' IS NULL OR c.NgayGiaoDich >= '" + fromDate + "')" +
@@ -880,7 +917,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND (" + req.getNhomNganhHangId() + " IS NULL OR c.nhomNganhHangId = " + req.getNhomNganhHangId() + ") "+
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND c.TongSoLuong > 0" +
-                        " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+                        " GROUP BY c.thuocId) s" +
                         " ORDER BY s.Tong desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopSL_T_ANY(query),
                         HangHoaDaTinhToanCache.class);
@@ -888,13 +925,14 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
             }
             case BaoCaoContains.TSLN -> {
                 query = "SELECT TOP(" + top + ") " +
-                        "s.tenNhomNganhHang, s.ThuocId, " +
-                        "s.tenThuoc, s.tenDonVi, " +
+                        "NULL as 'tenNhomNganhHang', s.ThuocId, " +
+                        "NULL as 'tenThuoc',NULL as 'tenDonVi'," +
                         "((s.gb-s.gn) /s.gn) * 100  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
-                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'" +
+                        "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
                         " FROM " +
-                        "(SELECT c.ThuocId,c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi" +
+                        "(SELECT c.ThuocId" +
                         ",avg(c.giabancs) as gb, avg(c.gianhapcs) as gn " +
                         "FROM " + entityName + " c" +
                         " WHERE 1=1 " +
@@ -905,7 +943,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         " AND ("+ req.getNhomHoatChatId() +" IS NULL OR c.nhomHoatChatId = "+ req.getNhomHoatChatId() +") " +
                         " AND c.giabancs > 0" +
                         " AND c.gianhapcs > 0" +
-                        " GROUP BY c.thuocId, c.tenThuoc, c.tenNhomNganhHang, c.tenDonVi) s" +
+                        " GROUP BY c.thuocId) s" +
                         " ORDER BY ((s.gb-s.gn) /s.gn) * 100 desc";
                 items = DataUtils.convertList(hdrRepo.groupByTopTSLN_T_ANY(query),
                         HangHoaDaTinhToanCache.class);
