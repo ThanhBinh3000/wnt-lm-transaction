@@ -39,6 +39,8 @@ public class HangHoa extends BaseEntity {
     private String tenNhomNganhHang;
     @Column(name = "TenDonVi")
     private String tenDonVi;
+    @Column(name = "TenDonViLe")
+    private String tenDonViLe;
     @Transient
     private BigDecimal giaBanMax;
     @Transient
