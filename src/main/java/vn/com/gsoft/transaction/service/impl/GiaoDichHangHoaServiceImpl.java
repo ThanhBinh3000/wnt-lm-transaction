@@ -106,6 +106,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
                     x.setTenNhomDuocLy(hh.getTenNhomDuocLy());
                     x.setTenNhomHoatChat(hh.getTenNhomHoatChat());
+                    x.setImagePreviewUrl(hh.getImagePreviewUrl());
+                    x.setImageThumbUrl(hh.getImageThumbUrl());
                 }
             });
         }
@@ -169,6 +171,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
                     x.setTenNhomDuocLy(hh.getTenNhomDuocLy());
                     x.setTenNhomHoatChat(hh.getTenNhomHoatChat());
+                    x.setImagePreviewUrl(hh.getImagePreviewUrl());
+                    x.setImageThumbUrl(hh.getImageThumbUrl());
                 }
             });
         }
@@ -234,6 +238,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                     x.setTenNhomNganhHang(hh.getTenNhomNganhHang());
                     x.setTenNhomDuocLy(hh.getTenNhomDuocLy());
                     x.setTenNhomHoatChat(hh.getTenNhomHoatChat());
+                    x.setImagePreviewUrl(hh.getImagePreviewUrl());
+                    x.setImageThumbUrl(hh.getImageThumbUrl());
                 }
             });
         }
@@ -726,6 +732,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " +
                         "(SELECT c.ThuocId" +
                         ", SUM(c.tongBan) as Tong FROM "+ entityName +" c" +
@@ -749,6 +756,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " +
                         "(SELECT c.ThuocId" +
                         ", SUM(c.TongSoLuong) as Tong FROM "+ entityName + " c" +
@@ -772,6 +780,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " +
                         "(SELECT c.ThuocId"  +
                         ",avg(c.giabancs) as gb, avg(c.gianhapcs) as gn " +
@@ -809,6 +818,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -829,6 +839,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -849,6 +860,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo', " +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " + entityName + " c" +
                         " WHERE 1=1 " +
                         " AND (" + req.getNhomDuocLyId() + " IS NULL OR c.nhomDuocLyId = " + req.getNhomDuocLyId() + ") "+
@@ -883,6 +895,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " +
                         "(SELECT c.ThuocId" +
                         ", SUM(c.tongBan) as Tong FROM " + entityName + " c" +
@@ -907,6 +920,7 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
                         "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        ",NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " +
                         "(SELECT c.ThuocId" +
                         ", SUM(c.TongSoLuong) as Tong FROM " + entityName + " c" +
@@ -930,7 +944,8 @@ public class GiaoDichHangHoaServiceImpl extends BaseServiceImpl<GiaoDichHangHoa,
                         "((s.gb-s.gn) /s.gn) * 100  as 'soLieuThiTruong'" +
                         ",0 as 'nhomDuocLyId', 0 as 'nhomHoatChatId', 0 as 'nhomNganhHangId'," +
                         "0.0 as 'tongNhap', 0.0 as 'tongBan', 0.0 as 'soLuong', 0.0 as 'soLieuCoSo'," +
-                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy'" +
+                        "NULL as 'tenNhomHoatChat' , NULL as 'tenNhomDuocLy', " +
+                        "NULL as 'imageThumbUrl', NULL as 'imagePreviewUrl'" +
                         " FROM " +
                         "(SELECT c.ThuocId" +
                         ",avg(c.giabancs) as gb, avg(c.gianhapcs) as gn " +
