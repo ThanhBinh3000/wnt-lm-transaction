@@ -41,6 +41,10 @@ public class HangHoa extends BaseEntity {
     private String tenDonVi;
     @Column(name = "TenDonViLe")
     private String tenDonViLe;
+    @Column(name = "ImageThumbUrl")
+    private String imageThumbUrl;
+    @Column(name = "ImagePreviewUrl")
+    private String imagePreviewUrl;
     @Transient
     private BigDecimal giaBanMax;
     @Transient

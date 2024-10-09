@@ -29,4 +29,6 @@ public class HangHoaDaTinhToanCache implements Serializable {
     private BigDecimal soLieuCoSo;
     private String tenNhomDuocLy;
     private String tenNhomHoatChat;
+    private String imageThumbUrl;
+    private String imagePreviewUrl;
 }
